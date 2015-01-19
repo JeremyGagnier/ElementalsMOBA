@@ -31,11 +31,15 @@ public class Chunk : MonoBehaviour
 	private int colCount;
 
 	public bool update = false;
+	public bool isActive = false;
 
 	public GameObject spotlightPrefab;
 
 	public void Setup (World world, int bWidth, int bHeight, int cx, int cy)
 	{
+		this.mesh = GetComponent<MeshFilter> ().mesh;
+		this.col = GetComponent<MeshCollider> ();
+
 		this.world = world;
 		this.blockWidth = bWidth;
 		this.blockHeight = bHeight;
@@ -43,23 +47,22 @@ public class Chunk : MonoBehaviour
 		this.chunky = cy;
 		this.transform.position = new Vector3(bWidth*cx, bHeight*cy, 0);
 
-		GenTerrain ();
+		this.GenTerrain ();
+	}
+
+	public void Activate ()
+	{
+		BuildMesh ();
+		UpdateMesh ();
+		isActive = true;
 	}
 
 	void Awake ()
 	{
-		mesh = GetComponent<MeshFilter> ().mesh;
-		col = GetComponent<MeshCollider> ();
 	}
 
 	void Start ()
 	{
-		//mesh = GetComponent<MeshFilter> ().mesh;
-		//col = GetComponent<MeshCollider> ();
-
-		//GenTerrain ();
-		BuildMesh ();
-		UpdateMesh ();
 	}
 	
 	// Update is called once per frame
@@ -320,11 +323,11 @@ public class Chunk : MonoBehaviour
 			int stone = Noise(truepx, 0, 80, 15, 1);
 			stone += Noise (truepx, 0, 50, 30, 1);
 			stone += Noise (truepx, 0, 10, 10, 1);
-			stone += 25;
+			stone += blockHeight * world.chunkHeight / 2;
 
 			int dirt = Noise (truepx, 0, 100, 35, 1);
 			dirt += Noise (truepx, 0, 50, 30, 1);
-			dirt += 25;
+			dirt += blockHeight * world.chunkHeight / 2;
 
 			for(int py = 0; py < blockHeight; py++)
 			{

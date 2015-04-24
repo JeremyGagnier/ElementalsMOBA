@@ -13,22 +13,21 @@ public class Chunk : MonoBehaviour
 	public int chunkx;
 	public int chunky;
 
-	private float tUnit = 0.25f;
-	private Vector2 tStone = new Vector2 (0, 0);
-	private Vector2 tGrass = new Vector2 (0, 1);
+    private const float tTexDim = 4.0f;
+    private const float tPixDim = 72.0f;
+    private const float tUnit = 16.0f / tPixDim;
+
+    private Vector2 tGrass = new Vector2(0, 0);
+    private Vector2 tStone = new Vector2(1, 0);
+    private Vector2 tStoneWall = new Vector2(2, 0);
 
 	public List<Vector3> newVertices = new List<Vector3>();
 	public List<int> newTriangles = new List<int>();
 	public List<Vector2> newUV = new List<Vector2>();
 
-	public List<Vector3> colVertices = new List<Vector3>();
-	public List<int> colTriangles = new List<int>();
-
 	private Mesh mesh;
-	private MeshCollider col;
 	
 	private int squareCount;
-	private int colCount;
 
 	public bool update = false;
 	public bool isActive = false;
@@ -38,7 +37,6 @@ public class Chunk : MonoBehaviour
 	public void Setup (World world, int bWidth, int bHeight, int cx, int cy)
 	{
 		this.mesh = GetComponent<MeshFilter> ().mesh;
-		this.col = GetComponent<MeshCollider> ();
 
 		this.world = world;
 		this.blockWidth = bWidth;
@@ -89,221 +87,28 @@ public class Chunk : MonoBehaviour
 		newVertices.Clear ();
 		newTriangles.Clear ();
 		newUV.Clear ();
-
-		Mesh newMesh = new Mesh();
-		newMesh.vertices = colVertices.ToArray ();
-		newMesh.triangles = colTriangles.ToArray ();
-		col.sharedMesh = newMesh;
-
-		colVertices.Clear ();
-		colTriangles.Clear ();
-		colCount = 0;
 	}
 
 	void GenSquare(int x, int y, Vector2 texture)
 	{
-		int neighborSetup = 0;
-		neighborSetup += 1 * Convert.ToInt32(Block(x + 1, y) != 0);
-		neighborSetup += 2 * Convert.ToInt32(Block(x, y - 1) != 0);
-		neighborSetup += 4 * Convert.ToInt32(Block(x - 1, y) != 0);
-		neighborSetup += 8 * Convert.ToInt32(Block(x, y + 1) != 0);
+        newVertices.Add(new Vector3(x, y, 0));
+        newVertices.Add(new Vector3(x, y + 1, 0));
+        newVertices.Add(new Vector3(x + 1, y + 1, 0));
+        newVertices.Add(new Vector3(x + 1, y, 0));
 
-		if (neighborSetup == 1)
-		{
-			SetVertices (new Vector3(x + 0.5f, y + 0.25f, 0),
-			             new Vector3(x + 0.5f, y + 0.75f, 0),
-			             new Vector3(x + 1, y + 1, 0),
-			             new Vector3(x + 1, y, 0),
-			             neighborSetup,
-			             false);
-		}
-		else if (neighborSetup == 2)
-		{
-			SetVertices (new Vector3(x, y, 0),
-			             new Vector3(x + 0.25f, y + 0.5f, 0),
-			             new Vector3(x + 0.75f, y + 0.5f, 0),
-			             new Vector3(x + 1, y, 0),
-			             neighborSetup,
-			             false);
-		}
-		else if (neighborSetup == 4)
-		{
-			SetVertices (new Vector3(x, y, 0),
-			             new Vector3(x, y + 1, 0),
-			             new Vector3(x + 0.5f, y + 0.75f, 0),
-			             new Vector3(x + 0.5f, y + 0.25f, 0),
-			             neighborSetup,
-			             false);
-		}
-		else if (neighborSetup == 8)
-		{
-			SetVertices (new Vector3(x + 0.25f, y + 0.5f, 0),
-			             new Vector3(x, y + 1, 0),
-			             new Vector3(x + 1, y + 1, 0),
-			             new Vector3(x + 0.75f, y + 0.5f, 0),
-			             neighborSetup,
-			             false);
-		}
-		else if (neighborSetup == 3) 	// In the next few checks the fourth vertice goes unused
-		{
-			SetVertices (new Vector3(x, y, 0),
-			             new Vector3(x + 1, y + 1, 0),
-			             new Vector3(x + 1, y, 0),
-			             new Vector3(x, y, 0),
-			             neighborSetup,
-			             true);
-		}
-		else if (neighborSetup == 6)
-		{
-			SetVertices (new Vector3(x, y, 0),
-			             new Vector3(x, y + 1, 0),
-			             new Vector3(x + 1, y, 0),
-			             new Vector3(x, y, 0),
-			             neighborSetup,
-			             true);
-		}
-		else if (neighborSetup == 9)
-		{
-			SetVertices (new Vector3(x + 1, y, 0),
-			             new Vector3(x, y + 1, 0),
-			             new Vector3(x + 1, y + 1, 0),
-			             new Vector3(x, y, 0),
-			             neighborSetup,
-			             true);
-		}
-		else if (neighborSetup == 12)
-		{
-			SetVertices (new Vector3(x, y, 0),
-			             new Vector3(x, y + 1, 0),
-			             new Vector3(x + 1, y + 1, 0),
-			             new Vector3(x, y, 0),
-			             neighborSetup,
-			             true);
-		}
-		else 			// Nothing fancy happening here
-		{
-			SetVertices (new Vector3(x, y, 0),
-			             new Vector3(x, y + 1, 0),
-			             new Vector3(x + 1, y + 1, 0),
-			             new Vector3(x + 1, y, 0),
-			             neighborSetup,
-			             false);
-		}
+        newTriangles.Add(squareCount * 4);
+        newTriangles.Add((squareCount * 4) + 1);
+        newTriangles.Add((squareCount * 4) + 3);
+        newTriangles.Add((squareCount * 4) + 1);
+        newTriangles.Add((squareCount * 4) + 2);
+        newTriangles.Add((squareCount * 4) + 3);
 
-		newUV.Add(new Vector2 (tUnit * texture.x, tUnit * texture.y + tUnit));
-		newUV.Add(new Vector2 (tUnit * texture.x + tUnit, tUnit * texture.y + tUnit));
-		newUV.Add(new Vector2 (tUnit * texture.x + tUnit, tUnit * texture.y));
-		newUV.Add(new Vector2 (tUnit * texture.x, tUnit * texture.y));
-	}
+        squareCount++;
 
-	void SetVertices (Vector3 vertice0,
-	                  Vector3 vertice1,
-	                  Vector3 vertice2,
-	                  Vector3 vertice3,
-	                  int neighborSetup,
-	                  bool oneTriangle)
-	{
-		newVertices.Add (vertice0);
-		newVertices.Add (vertice1);
-		newVertices.Add (vertice2);
-		newVertices.Add (vertice3);
-
-		MeshTriangles(oneTriangle);
-		squareCount++;
-
-		if (neighborSetup == 3)
-		{
-			colVertices.Add (new Vector3 (vertice1.x, vertice1.y, 1));
-			colVertices.Add (new Vector3 (vertice1.x, vertice1.y, 0));
-			colVertices.Add (new Vector3 (vertice0.x, vertice0.y, 0));
-			colVertices.Add (new Vector3 (vertice0.x, vertice0.y, 1));
-			
-			ColliderTriangles();
-			colCount++;
-		}
-		else if (neighborSetup == 6)
-		{
-			colVertices.Add (new Vector3 (vertice2.x, vertice2.y, 1));
-			colVertices.Add (new Vector3 (vertice2.x, vertice2.y, 0));
-			colVertices.Add (new Vector3 (vertice1.x, vertice1.y, 0));
-			colVertices.Add (new Vector3 (vertice1.x, vertice1.y, 1));
-			
-			ColliderTriangles();
-			colCount++;
-		}
-		else if (neighborSetup == 9)
-		{
-			colVertices.Add (new Vector3 (vertice0.x, vertice0.y, 1));
-			colVertices.Add (new Vector3 (vertice0.x, vertice0.y, 0));
-			colVertices.Add (new Vector3 (vertice1.x, vertice1.y, 0));
-			colVertices.Add (new Vector3 (vertice1.x, vertice1.y, 1));
-			
-			ColliderTriangles();
-			colCount++;
-		}
-		else if (neighborSetup == 12)
-		{
-			colVertices.Add (new Vector3 (vertice0.x, vertice0.y, 1));
-			colVertices.Add (new Vector3 (vertice0.x, vertice0.y, 0));
-			colVertices.Add (new Vector3 (vertice2.x, vertice2.y, 0));
-			colVertices.Add (new Vector3 (vertice2.x, vertice2.y, 1));
-			
-			ColliderTriangles();
-			colCount++;
-		}
-		else
-		{
-			//Top
-			if (neighborSetup%4 < 2)
-			{
-				colVertices.Add (new Vector3 (vertice0.x, vertice0.y, 1));
-				colVertices.Add (new Vector3 (vertice0.x, vertice0.y, 0));
-				colVertices.Add (new Vector3 (vertice3.x, vertice3.y, 0));
-				colVertices.Add (new Vector3 (vertice3.x, vertice3.y, 1));
-				
-				ColliderTriangles();
-				colCount++;
-			}
-
-			//Bottom
-			if (neighborSetup < 8)
-			{
-				colVertices.Add (new Vector3 (vertice1.x, vertice1.y, 0));
-				colVertices.Add (new Vector3 (vertice1.x, vertice1.y, 1));
-				colVertices.Add (new Vector3 (vertice2.x, vertice2.y, 1));
-				colVertices.Add (new Vector3 (vertice2.x, vertice2.y, 0));
-				
-				ColliderTriangles();
-				
-				colCount++;
-			}
-			
-			//Left
-			if (neighborSetup%8 < 4)
-			{
-				colVertices.Add (new Vector3 (vertice1.x, vertice1.y, 1));
-				colVertices.Add (new Vector3 (vertice1.x, vertice1.y, 0));
-				colVertices.Add (new Vector3 (vertice0.x, vertice0.y, 0));
-				colVertices.Add (new Vector3 (vertice0.x, vertice0.y, 1));
-			
-				ColliderTriangles();
-				
-				colCount++;
-			}
-			
-			//Right
-			if (neighborSetup%2 == 0)
-			{
-				colVertices.Add (new Vector3 (vertice3.x, vertice3.y, 1));
-				colVertices.Add (new Vector3 (vertice3.x, vertice3.y, 0));
-				colVertices.Add (new Vector3 (vertice2.x, vertice2.y, 0));
-				colVertices.Add (new Vector3 (vertice2.x, vertice2.y, 1));
-				
-				ColliderTriangles();
-				
-				colCount++;
-			}
-		}
+        newUV.Add(new Vector2(texture.x / tTexDim + 1 / tPixDim, texture.y / tTexDim + 1 / tPixDim));
+        newUV.Add(new Vector2(texture.x / tTexDim + 1 / tPixDim, texture.y / tTexDim + 1 / tPixDim + tUnit));
+        newUV.Add(new Vector2(texture.x / tTexDim + 1 / tPixDim + tUnit, texture.y / tTexDim + 1 / tPixDim + tUnit));
+        newUV.Add(new Vector2(texture.x / tTexDim + 1 / tPixDim + tUnit, texture.y / tTexDim + 1 / tPixDim));
 	}
 
 	// Scale defines smoothness, mag is magnitude and exp is exponent.
@@ -365,7 +170,7 @@ public class Chunk : MonoBehaviour
 				{
 					if (blocks[px,py] == 1)
 					{
-						GenSquare (px, py, tStone);
+						GenSquare (px, py, tStoneWall);
 					}
 					else if (blocks[px,py] == 2)
 					{
@@ -373,35 +178,6 @@ public class Chunk : MonoBehaviour
 					}
 				}
 			}
-		}
-	}
-
-	void ColliderTriangles ()
-	{
-			colTriangles.Add(colCount*4);
-			colTriangles.Add((colCount*4) + 1);
-			colTriangles.Add((colCount*4) + 3);
-			colTriangles.Add((colCount*4) + 1);
-			colTriangles.Add((colCount*4) + 2);
-			colTriangles.Add((colCount*4) + 3);
-	}
-
-	void MeshTriangles (bool oneTriangle)
-	{
-		if (oneTriangle)
-		{
-			newTriangles.Add(squareCount*4);
-			newTriangles.Add((squareCount*4)+1);
-			newTriangles.Add((squareCount*4)+2);
-		}
-		else
-		{
-			newTriangles.Add(squareCount*4);
-			newTriangles.Add((squareCount*4)+1);
-			newTriangles.Add((squareCount*4)+3);
-			newTriangles.Add((squareCount*4)+1);
-			newTriangles.Add((squareCount*4)+2);
-			newTriangles.Add((squareCount*4)+3);
 		}
 	}
 
@@ -443,20 +219,14 @@ public class Chunk : MonoBehaviour
 		}
 		return blocks[x,y];
 	}
+
+	public int DestroyBlock (int bx, int by)
+	{
+		int oldBlock = blocks[bx, by];
+		blocks[bx, by] = 0;
+
+		update = true;
+
+		return oldBlock;
+	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

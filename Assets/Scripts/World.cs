@@ -22,24 +22,29 @@ public class World : MonoBehaviour
 	public int blockWidth = 50;
 	public int blockHeight = 50;
 	public int chunkWidth = 1;
-	public int chunkHeight = 1;
-	public GameObject chunkPrefab;
-	private Chunk[,] chunks;
+    public int chunkHeight = 1;
+    public GameObject chunkPrefab;
+    public GameObject lightmapPrefab;
 
-	public Dictionary<Tuple, GameObject> generatedChunks;
-    public List<Tuple> generationOrder;
+	public Dictionary<Tuple, GameObject> generatedChunks = new Dictionary<Tuple, GameObject>();
+    public Dictionary<Tuple, GameObject> generatedLightmaps = new Dictionary<Tuple, GameObject>();
+    public List<Tuple> generationOrder = new List<Tuple>();
 	public GameObject localPlayer;
 	private int playerCX = -1;
 	private int playerCY = -1;
 
-	void Awake ()
-	{
-        generatedChunks = new Dictionary<Tuple, GameObject>();
-        generationOrder = new List<Tuple>();
-	}
-
+    private byte[,] emptyChunk;
+    
 	void Start ()
 	{
+        emptyChunk = new byte[blockWidth, blockHeight];
+        for (int x = 0; x < blockWidth; ++x)
+        {
+            for (int y = 0; y < blockHeight; ++y)
+            {
+                emptyChunk[x, y] = 0;
+            }
+        }
 		localPlayer.transform.position = new Vector3(blockWidth * chunkWidth / 2, (blockHeight + 10) * chunkHeight / 2);
 	}
 
@@ -62,12 +67,18 @@ public class World : MonoBehaviour
                     Tuple pos = new Tuple(x, y);
 					if (!generatedChunks.ContainsKey(pos))
 					{
-						GameObject chunk = (GameObject)Instantiate (chunkPrefab);
-						generatedChunks[pos] = chunk;
+						GameObject blockmap = (GameObject)Instantiate (chunkPrefab);
+						generatedChunks[pos] = blockmap;
 						generationOrder.Add (pos);
-						chunk.name = "Chunk(" + x.ToString () + "," + y.ToString () + ")";
-						chunk.transform.parent = this.transform;
-						chunk.GetComponent<Chunk> ().Setup (this, blockWidth, blockHeight, x, y);
+						blockmap.name = "Blockmap(" + x.ToString () + "," + y.ToString () + ")";
+						blockmap.transform.parent = this.transform;
+						blockmap.GetComponent<Blockmap> ().Setup (this, blockWidth, blockHeight, x, y);
+
+                        GameObject lightmap = (GameObject)Instantiate(lightmapPrefab);
+                        generatedLightmaps[pos] = lightmap;
+                        lightmap.name = "Lightmap(" + x.ToString() + "," + y.ToString() + ")";
+                        lightmap.transform.parent = this.transform;
+                        lightmap.GetComponent<Lightmap>().Setup(this, blockWidth, blockHeight, x, y);
 					}
 				}
 			}
@@ -82,10 +93,13 @@ public class World : MonoBehaviour
 						continue;
 					}
                     Tuple pos = new Tuple(x, y);
-					if (!generatedChunks[pos].GetComponent<Chunk> ().isActive)
-					{
-						generatedChunks[pos].GetComponent<Chunk> ().Activate ();
-					}
+
+                    Lightmap lmap = generatedLightmaps[pos].GetComponent<Lightmap>();
+                    Blockmap bmap = generatedChunks[pos].GetComponent<Blockmap>();
+                    if (!lmap.isActive)
+                    {
+                        lmap.Activate(bmap);
+                    }
 				}
 			}
 			playerCX = pcx;
@@ -97,10 +111,14 @@ public class World : MonoBehaviour
 				{
                     if (pcx + 3 < generationOrder[i].x || pcx - 3 > generationOrder[i].x ||
                         pcy + 3 < generationOrder[i].y || pcy - 3 > generationOrder[i].y)
-					{
+                    {
                         DestroyObject(generatedChunks[generationOrder[i]]);
                         generatedChunks.Remove(generationOrder[i]);
-						generationOrder.RemoveAt(i);
+
+                        DestroyObject(generatedLightmaps[generationOrder[i]]);
+                        generatedLightmaps.Remove(generationOrder[i]);
+
+                        generationOrder.RemoveAt(i);
 						break;
 					}
 				}
@@ -117,7 +135,7 @@ public class World : MonoBehaviour
 			int by = blockHoverY % blockHeight;
 			if (BlockAt (cx, cy, bx, by) != 0)
 		    {
-                generatedChunks[new Tuple(cx, cy)].GetComponent<Chunk>().DestroyBlock(bx, by);
+                generatedChunks[new Tuple(cx, cy)].GetComponent<Blockmap>().DestroyBlock(bx, by);
 			}
 		}
 	}
@@ -128,6 +146,15 @@ public class World : MonoBehaviour
 		{
 			return (byte)1;
 		}
-        return generatedChunks[new Tuple(cx, cy)].GetComponent<Chunk>().blocks[bx, by];
+        return generatedChunks[new Tuple(cx, cy)].GetComponent<Blockmap>().blocks[bx, by];
 	}
+
+    public byte[,] ChunkAt(int cx, int cy)
+    {
+        if (cx < 0 || cx >= chunkWidth || cy < 0 || cy >= chunkHeight)
+        {
+            return emptyChunk;
+        }
+        return generatedChunks[new Tuple(cx, cy)].GetComponent<Blockmap>().blocks;
+    }
 }

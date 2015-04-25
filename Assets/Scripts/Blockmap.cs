@@ -3,7 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-public class Chunk : MonoBehaviour
+public class Blockmap : MonoBehaviour
 {
 	public byte[,] blocks;
 
@@ -29,7 +29,7 @@ public class Chunk : MonoBehaviour
 	
 	private int squareCount;
 
-	public bool update = false;
+    public bool update = false;
 	public bool isActive = false;
 
 	public GameObject spotlightPrefab;
@@ -48,31 +48,21 @@ public class Chunk : MonoBehaviour
 		this.GenTerrain ();
 	}
 
-	public void Activate ()
-	{
-		BuildMesh ();
-		UpdateMesh ();
-		isActive = true;
+	public void Activate (byte[,] brightness)
+    {
+        isActive = true;
+        BuildMesh(brightness);
+        update = true;
 	}
 
-	void Awake ()
-	{
-	}
-
-	void Start ()
-	{
-	}
-	
-	// Update is called once per frame
-	void Update ()
-	{
-		if (update)
-		{
-			BuildMesh ();
-			UpdateMesh ();
-			update = false;
-		}
-	}
+    void Update()
+    {
+        if (update)
+        {
+            UpdateMesh();
+            update = false;
+        }
+    }
 
 	void UpdateMesh ()
 	{
@@ -160,22 +150,26 @@ public class Chunk : MonoBehaviour
 		}
 	}
 
-	void BuildMesh ()
+	void BuildMesh (byte[,] brightness)
 	{
 		for(int px = 0; px < blockWidth; px++)
 		{
 			for(int py = 0; py < blockHeight; py++)
 			{
-				if(blocks[px,py] != 0)
+				if(blocks[px, py] != 0 && brightness[px, py] != 0)
 				{
-					if (blocks[px,py] == 1)
+					if (blocks[px, py] == 1)
 					{
-						GenSquare (px, py, tStoneWall);
+						GenSquare (px, py, tStone);
 					}
 					else if (blocks[px,py] == 2)
 					{
 						GenSquare (px, py, tGrass);
 					}
+                    else if (blocks[px, py] == 3)
+                    {
+                        GenSquare(px, py, tStoneWall);
+                    }
 				}
 			}
 		}
@@ -224,8 +218,6 @@ public class Chunk : MonoBehaviour
 	{
 		int oldBlock = blocks[bx, by];
 		blocks[bx, by] = 0;
-
-		update = true;
 
 		return oldBlock;
 	}

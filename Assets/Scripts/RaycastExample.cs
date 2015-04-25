@@ -4,13 +4,13 @@ using System.Collections;
 public class RaycastExample : MonoBehaviour
 {
 	public GameObject terrain;
-	private Chunk tScript;
+	private Blockmap tScript;
 	public GameObject target;
 	private LayerMask layerMask = (1 << 0);
 
 	void Start ()
 	{
-		tScript = terrain.GetComponent ("PolygonGenerator") as Chunk;
+		tScript = terrain.GetComponent ("PolygonGenerator") as Blockmap;
 	}
 
 	void Update ()
@@ -29,8 +29,6 @@ public class RaycastExample : MonoBehaviour
 			Debug.DrawLine (hit.point, point, Color.green);
 
 			tScript.blocks[Mathf.RoundToInt(point.x - 0.5f), Mathf.RoundToInt(point.y + 0.5f)] = 0;
-
-			tScript.update = true;
 		}
 		else
 		{

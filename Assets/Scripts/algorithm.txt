@@ -1,5 +1,5 @@
 FInt timestep = new FInt(0.01666f);
-while(timestep != 0)
+while(true)
 {
   bool xIsMin = true;
   FInt minTimestep = timestep;
@@ -43,10 +43,35 @@ while(timestep != 0)
       xIsMin = true;
     }
     
-    if (minY < minTimeste)
+    if (minY < minTimestep)
     {
       minTimestep = minY;
       xIsMin = false;
+    }
+  }
+  
+  mover.position += mover.velocity * minTimestep;
+  timestep -= minTimestep;
+  if (timestep == 0)
+  {
+    break;
+  }
+  
+  bool collision = false;
+  foreach(Vector4 pos in mover.hitbox)
+  {
+    for(int y = ymin; y < ymin + pos.w; ++y)
+    {
+      if(world.BlockAt(xPos, y) != 0)
+      {
+        BlockCollide(mover);
+        collision = true;
+        break;
+      }
+    }
+    if (collision)
+    {
+      break;
     }
   }
 }

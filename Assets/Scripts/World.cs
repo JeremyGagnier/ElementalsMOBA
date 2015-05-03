@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
+[System.Serializable]
 public struct Tuple
 {
     public int x;
@@ -45,7 +46,7 @@ public class World : MonoBehaviour
                 emptyChunk[x, y] = 0;
             }
         }
-		localPlayer.transform.position = new Vector3(blockWidth * chunkWidth / 2, (blockHeight + 10) * chunkHeight / 2);
+		//localPlayer.transform.position = new Vector3(blockWidth * chunkWidth / 2, (blockHeight + 10) * chunkHeight / 2);
 	}
 
 	void Update ()
@@ -148,6 +149,11 @@ public class World : MonoBehaviour
 		}
         return generatedChunks[new Tuple(cx, cy)].GetComponent<Blockmap>().blocks[bx, by];
 	}
+
+    public byte BlockAt(int x, int y)
+    {
+        return BlockAt(x / blockWidth, y / blockHeight, x % blockWidth, y % blockHeight);
+    }
 
     public byte[,] ChunkAt(int cx, int cy)
     {

@@ -7,71 +7,82 @@ public class PhysicsMover : MonoBehaviour {
     [SerializeField]
     public List<Vector4> hitbox;
 
-    public float weight;
-    [HideInInspector]
-    public int mass;
+    // Measured with block of dirt = 1
+    public float mass_e;
+    public FInt mass;
 
-    public float verticalAirSpeed;
-    public float horizontalAirSpeed;
+    // Measured in blocks per second
+    public float verticalAirSpeed_e;
+    public FInt verticalAirSpeed;
 
-    public float fallingSpeed;
-    public float fallingAcceleration;
-    [HideInInspector]
-    public int fallSpeed;
-    [HideInInspector]
-    public int fallAccel;
+    // Measured in blocks per second
+    public float horizontalAirSpeed_e;
+    public FInt horizontalAirSpeed;
+
+    // Measure in blocks per second
+    public float fallSpeed_e;
+    public FInt fallSpeed;
+
+    // Measured in blocks per second squared
+    public float fallAccel_e;
+    public FInt fallAccel;
 
     public bool allowInput = true;
     public bool carried = false;
+    public bool grounded = false;
 
-    public Tuple position = new Tuple(0, 0);
-    public Tuple velocity = new Tuple(0, 0);
+    //public Tuple position_e = new Tuple(0, 0);
+    public FVector position = new FVector(FInt.Zero(), FInt.Zero());
+    public FVector velocity = new FVector(FInt.Zero(), FInt.Zero());
 
     void OnDrawGizmos()
     {
         foreach (Vector4 pos in hitbox)
         {
-            Gizmos.color = new Color(0, 1, 0, 0.2f);
-            Gizmos.DrawCube(transform.position + new Vector3(pos.x + pos.z / 2, pos.y + pos.w / 2, 0), 
-                            new Vector3(pos.z, pos.w, 1));
+            int xMin = (new FInt(transform.position.x) + pos.x).ToInt() - 1;
+            int xMax = (new FInt(transform.position.x) + pos.x + pos.z - FInt.RawFInt(256)).ToInt() + 1;
+            int yMin = (new FInt(transform.position.y) + pos.y).ToInt() - 1;
+            int yMax = (new FInt(transform.position.y) + pos.y + pos.w - FInt.RawFInt(256)).ToInt() + 1;
 
-            int minBlockx = (position.x + (int)(pos.x * (1 << 16))) >> 16;
-            int minBlocky = (position.y + (int)(pos.y * (1 << 16))) >> 16;
-            int fractionx = (position.x + (int)(pos.x * (1 << 16))) % (1 << 16);
-            int fractiony = (position.y + (int)(pos.y * (1 << 16))) % (1 << 16);
-
-            int width = Mathf.CeilToInt(pos.z) + 1;
-            if (fractionx == 0)
+            Gizmos.color = new Color(0, 0, 1, 0.35f);
+            for (int x = xMin + 1; x < xMax; ++x)
             {
-                width -= 1;
-            }
-
-            int height = Mathf.CeilToInt(pos.w) + 1;
-            if (fractiony == 0)
-            {
-                height -= 1;
-            }
-
-            Gizmos.color = new Color(0, 0, 1, 0.2f);
-            for (int x = minBlockx; x < minBlockx + width; ++x)
-            {
-                for (int y = minBlocky; y < minBlocky + height; ++y)
+                for (int y = yMin + 1; y < yMax; ++y)
                 {
                     Gizmos.DrawCube(new Vector3(x + 0.5f, y + 0.5f, 0), new Vector3(1, 1, 1));
                 }
+            }
+
+            Gizmos.color = new Color(1, 0, 1, 0.5f);
+            for (int y = yMin + 1; y < yMax; ++y)
+            {
+                Gizmos.DrawCube(new Vector3(xMin + 0.5f, y + 0.5f, 0), new Vector3(1, 1, 1));
+                Gizmos.DrawCube(new Vector3(xMax + 0.5f, y + 0.5f, 0), new Vector3(1, 1, 1));
+            }
+            for (int x = xMin + 1; x < xMax; ++x)
+            {
+                Gizmos.DrawCube(new Vector3(x + 0.5f, yMin + 0.5f, 0), new Vector3(1, 1, 1));
+                Gizmos.DrawCube(new Vector3(x + 0.5f, yMax + 0.5f, 0), new Vector3(1, 1, 1));
             }
         }
     }
 
     void Start()
     {
-        mass = (int)(weight * (1 << 16));
-        fallSpeed = (int)(fallingSpeed * (1 << 16));
-        fallAccel = (int)(fallingAcceleration * 0.01666f * (1 << 16));
+        mass = new FInt(mass_e);
+        verticalAirSpeed = new FInt(verticalAirSpeed_e);
+        horizontalAirSpeed = new FInt(horizontalAirSpeed_e);
+        fallSpeed = new FInt(fallSpeed_e);
+        fallAccel = new FInt(fallAccel_e);
+        //position = new FVector(new FInt(position_e.x), new FInt(position_e.y));
     }
 
-    public virtual Tuple ApplyInput(Tuple vel)
+    public virtual FVector ApplyInput(FVector vel)
     {
         return vel;
+    }
+
+    public virtual void CollideWithBlocks(List<Tuple> blocks)
+    {
     }
 }

@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class Player : PhysicsMover {
 	public const int MAX_FALL_SPEED = 30;
@@ -8,40 +9,56 @@ public class Player : PhysicsMover {
 
 	void Start ()
     {
-        mass = (int)(weight * (1 << 16));
-        fallSpeed = (int)(fallingSpeed * (1 << 16));
-        fallAccel = (int)(fallingAcceleration * 0.01666f * (1 << 16));
+        mass = new FInt(mass_e);
+        verticalAirSpeed = new FInt(verticalAirSpeed_e);
+        horizontalAirSpeed = new FInt(horizontalAirSpeed_e);
+        fallSpeed = new FInt(fallSpeed_e);
+        fallAccel = new FInt(fallAccel_e);
+        position = new FVector(new FInt(transform.position.x), new FInt(transform.position.y));
 
-        position.x = position.x << 16;
-        position.y = position.y << 16;
-
-        float px = (float)(position.x >> 16) + (float)(position.x % (1 << 16)) / (float)(1 << 16);
-        float py = (float)(position.y >> 16) + (float)(position.y % (1 << 16)) / (float)(1 << 16);
-        transform.position = new Vector3(px, py, 0);
+        transform.position = new Vector3(position.x.ToFloat(), position.y.ToFloat(), 0);
 	}
 
 	void Update ()
 	{
-        /*
-        if (Input.GetAxis("Vertical") != 0)
-        {
-            transform.position += new Vector3(0, moveSpeed * Time.deltaTime * Input.GetAxis("Vertical"), 0);
-        }*/
 
-        //Debug.Log(Input.GetAxis("Horizontal").ToString("n3") + ", " + Input.GetAxis("Vertical").ToString("n3"));
 	}
 
-    public override Tuple ApplyInput(Tuple vel)
+    public override FVector ApplyInput(FVector vel)
     {
         float xInput = Input.GetAxis("Horizontal");
         if (carried)
         {
-            vel.x += (int)(xInput * horizontalAirSpeed * (1 << 16));
+            if (xInput > 0)
+            {
+                vel.x += horizontalAirSpeed * PhysicsManager.timestep;
+            }
+            else if (xInput < 0)
+            {
+                vel.x -= horizontalAirSpeed * PhysicsManager.timestep;
+            }
         }
         else
         {
-                vel.x = (int)(xInput * horizontalAirSpeed * (1 << 16));
+            if (xInput > 0)
+            {
+                vel.x = horizontalAirSpeed;
+            }
+            else if (xInput < 0)
+            {
+                vel.x = -horizontalAirSpeed;
+            }
+            else
+            {
+                vel.x = FInt.Zero();
+            }
         }
         return vel;
+    }
+
+    public override void CollideWithBlocks(List<Tuple> blocks)
+    {
+        grounded = true;
+        velocity = new FVector(FInt.Zero(), FInt.Zero());
     }
 }

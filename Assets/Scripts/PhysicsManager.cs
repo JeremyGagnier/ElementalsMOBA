@@ -4,7 +4,11 @@ using System.Collections.Generic;
 
 public class PhysicsManager : MonoBehaviour {
 
+    public static FInt timestep = new FInt(0.01666f);
+
     public World world;
+
+    public static int frame = 0;
 
     List<PhysicsMover> movers = new List<PhysicsMover>();
 
@@ -13,8 +17,7 @@ public class PhysicsManager : MonoBehaviour {
         movers = new List<PhysicsMover>(FindObjectsOfType<PhysicsMover>());
 	}
 	
-	// Update is called once per frame
-	void LateUpdate () {
+	void FixedUpdate () {
         Advance(1);
 	}
 
@@ -27,73 +30,185 @@ public class PhysicsManager : MonoBehaviour {
     {
         for (int i = 0; i < frames; ++i)
         {
-            foreach (PhysicsMover mover in movers)
+            if (frame > 10)         // Don't do anything until the game scene is loaded
             {
-                UpdateVelocity(mover);
-                UpdatePosition(mover);
+                foreach (PhysicsMover mover in movers)
+                {
+                    MoveMover(mover);
+                }
             }
+            ++frame;
         }
     }
 
     private void UpdateVelocity(PhysicsMover mover)
     {
-        Tuple velocity = mover.velocity;
-        if (velocity.y > -mover.fallSpeed)
+        if (!mover.grounded)
         {
-            velocity.y -= mover.fallAccel;
-        }
-        if (velocity.y < -mover.fallSpeed && !mover.carried)
-        {
-            velocity.y = -mover.fallSpeed;
+            if (mover.velocity.y > -mover.fallSpeed)
+            {
+                mover.velocity.y -= mover.fallAccel * timestep;
+            }
+            if (mover.velocity.y < -mover.fallSpeed && !mover.carried)
+            {
+                mover.velocity.y = -mover.fallSpeed;
+            }
         }
         if (mover.allowInput)
         {
-            velocity = mover.ApplyInput(velocity);
+            mover.velocity = mover.ApplyInput(mover.velocity);
         }
-        mover.velocity = velocity;
     }
 
-    private void UpdatePosition(PhysicsMover mover)
+    private void MoveMover(PhysicsMover mover)
     {
-        foreach (Vector4 pos in mover.hitbox)
+        UpdateVelocity(mover);
+        CollideWithWorld(mover);
+        if (mover.grounded)
         {
-            int minBlockx = (mover.position.x + (int)(pos.x * (1 << 16))) >> 16;
-            int minBlocky = (mover.position.y + (int)(pos.y * (1 << 16))) >> 16;
-            int fractionx = (mover.position.x + (int)(pos.x * (1 << 16))) % (1 << 16);
-            int fractiony = (mover.position.y + (int)(pos.y * (1 << 16))) % (1 << 16);
+            mover.grounded = IsGrounded(mover);
+        }
 
-            int width = Mathf.CeilToInt(pos.z) + 1;
-            if (fractionx == 0)
-            {
-                width -= 1;
-            }
+        float px = mover.position.x.ToFloat();
+        float py = mover.position.y.ToFloat();
+        mover.transform.position = new Vector3(px, py, 0);
+    }
 
-            int height = Mathf.CeilToInt(pos.w) + 1;
-            if (fractiony == 0)
+    private void CollideWithWorld(PhysicsMover mover)
+    {
+        FInt step = new FInt(timestep);
+        while (true)
+        {
+            bool xIsMin = true;
+            FInt minTimestep = new FInt(step);
+            foreach (Vector4 pos in mover.hitbox)
             {
-                height -= 1;
-            }
+                FInt xTime = FInt.Max();
+                FInt yTime = FInt.Max();
 
-            for (int x = minBlockx; x < minBlockx + width; ++x)
-            {
-                for (int y = minBlocky; y < minBlocky + height; ++y)
+                if (mover.velocity.x < FInt.Zero())
                 {
-                    // If you start a frame inside a block then you are stuck.
-                    if (world.BlockAt(x, y) != 0)
+                    int minX = (mover.position.x + pos.x).ToInt();
+                    FInt minOffX = mover.position.x + pos.x - new FInt(minX);
+                    xTime = minOffX / -mover.velocity.x;
+                    if (xTime.rawValue == 0)
                     {
-                        mover.velocity.x = 0;
-                        mover.velocity.y = 0;
-                        return;
+                        xTime = FInt.One() / -mover.velocity.x;
+                    }
+                }
+                else if (mover.velocity.x > FInt.Zero())
+                {
+                    int maxX = (mover.position.x + pos.x + pos.z - FInt.RawFInt(1)).ToInt() + 1;
+                    FInt maxOffX = new FInt(maxX) - (mover.position.x + pos.x + pos.z);
+                    xTime = maxOffX / mover.velocity.x;
+                    if (xTime.rawValue == 0)
+                    {
+                        xTime = FInt.One() / mover.velocity.x;
+                    }
+                }
+
+                if (mover.velocity.y < FInt.Zero())
+                {
+                    int minY = (mover.position.y + pos.y).ToInt();
+                    FInt minOffY = mover.position.y + pos.y - new FInt(minY);
+                    yTime = minOffY / -mover.velocity.y;
+                    if (yTime.rawValue == 0)
+                    {
+                        yTime = FInt.One() / -mover.velocity.y;
+                    }
+                }
+                else if (mover.velocity.y > FInt.Zero())
+                {
+                    int maxY = (mover.position.y + pos.y + pos.w - FInt.RawFInt(1)).ToInt() + 1;
+                    FInt maxOffY = new FInt(maxY) - (mover.position.y + pos.y + pos.w);
+                    yTime = maxOffY / mover.velocity.y;
+                    if (yTime.rawValue == 0)
+                    {
+                        yTime = FInt.One() / mover.velocity.y;
+                    }
+                }
+
+                if (xTime < minTimestep)
+                {
+                    minTimestep = xTime;
+                    xIsMin = true;
+                }
+
+                if (yTime < minTimestep)
+                {
+                    minTimestep = yTime;
+                    xIsMin = false;
+                }
+            }
+
+            mover.position += mover.velocity * minTimestep;
+            step -= minTimestep;
+
+            if (step.rawValue == 0)
+            {
+                break;
+            }
+
+            List<Tuple> blocksHit = new List<Tuple>();
+            foreach (Vector4 pos in mover.hitbox)
+            {
+                int xMin = (mover.position.x + pos.x).ToInt() - 1;
+                int xMax = (mover.position.x + pos.x + pos.z - FInt.RawFInt(1)).ToInt() + 1;
+                int yMin = (mover.position.y + pos.y).ToInt() - 1;
+                int yMax = (mover.position.y + pos.y + pos.w - FInt.RawFInt(1)).ToInt() + 1;
+
+                if (xIsMin)
+                {
+                    int xPos = (mover.velocity.x.rawValue < 0) ? xMin : xMax;
+                    for (int y = yMin + 1; y < yMax; ++y)
+                    {
+                        if (world.BlockAt(xPos, y) != 0)
+                        {
+                            blocksHit.Add(new Tuple(xPos, y));
+                        }
+                    }
+                }
+                else
+                {
+                    int yPos = (mover.velocity.y.rawValue < 0) ? yMin : yMax;
+                    for (int x = xMin + 1; x < xMax; ++x)
+                    {
+                        if (world.BlockAt(x, yPos) != 0)
+                        {
+                            blocksHit.Add(new Tuple(x, yPos));
+                        }
                     }
                 }
             }
+            if (blocksHit.Count != 0)
+            {
+                mover.CollideWithBlocks(blocksHit);
+            }
+
+            if (mover.velocity.x.rawValue == 0 &&
+                mover.velocity.y.rawValue == 0)
+            {
+                break;
+            }
         }
-
-        mover.position.x += mover.velocity.x;
-        mover.position.y += mover.velocity.y;
-
-        float px = (float)(mover.position.x >> 16) + (float)(mover.position.x % (1 << 16)) / (float)(1 << 16);
-        float py = (float)(mover.position.y >> 16) + (float)(mover.position.y % (1 << 16)) / (float)(1 << 16);
-        mover.transform.position = new Vector3(px, py, 0);
     }
+
+    private bool IsGrounded(PhysicsMover mover)
+    {
+        foreach (Vector4 pos in mover.hitbox)
+        {
+            int yPos = (mover.position.y + pos.y).ToInt() - 1;
+            int xMin = (mover.position.x + pos.x).ToInt() - 1;
+            int xMax = (mover.position.x + pos.x + pos.z - FInt.RawFInt(1)).ToInt() + 1;
+            for (int x = xMin + 1; x < xMax; ++x)
+            {
+                if (world.BlockAt(x, yPos) != 0)
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
 }

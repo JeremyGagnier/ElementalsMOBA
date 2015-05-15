@@ -121,6 +121,7 @@ MonoBehaviour:
   hitbox:
   - {x: -.899999976, y: -1.5, z: 1.79999995, w: 3}
   mass_e: 9
+  runSpeed_e: 8
   verticalAirSpeed_e: 10
   horizontalAirSpeed_e: 10
   fallSpeed_e: 50

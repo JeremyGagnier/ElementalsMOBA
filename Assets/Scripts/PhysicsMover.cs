@@ -12,6 +12,10 @@ public class PhysicsMover : MonoBehaviour {
     public FInt mass;
 
     // Measured in blocks per second
+    public float runSpeed_e;
+    public FInt runSpeed;
+
+    // Measured in blocks per second
     public float verticalAirSpeed_e;
     public FInt verticalAirSpeed;
 
@@ -74,6 +78,7 @@ public class PhysicsMover : MonoBehaviour {
         horizontalAirSpeed = new FInt(horizontalAirSpeed_e);
         fallSpeed = new FInt(fallSpeed_e);
         fallAccel = new FInt(fallAccel_e);
+        runSpeed = new FInt(runSpeed_e);
         //position = new FVector(new FInt(position_e.x), new FInt(position_e.y));
     }
 
@@ -82,7 +87,7 @@ public class PhysicsMover : MonoBehaviour {
         return vel;
     }
 
-    public virtual void CollideWithBlocks(List<Tuple> blocks)
+    public virtual void CollideWithBlocks(bool xIsMin, List<Tuple> blocks)
     {
     }
 }

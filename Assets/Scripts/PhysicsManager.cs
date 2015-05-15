@@ -182,7 +182,7 @@ public class PhysicsManager : MonoBehaviour {
             }
             if (blocksHit.Count != 0)
             {
-                mover.CollideWithBlocks(blocksHit);
+                mover.CollideWithBlocks(xIsMin, blocksHit);
             }
 
             if (mover.velocity.x.rawValue == 0 &&

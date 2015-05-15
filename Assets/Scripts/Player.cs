@@ -14,6 +14,7 @@ public class Player : PhysicsMover {
         horizontalAirSpeed = new FInt(horizontalAirSpeed_e);
         fallSpeed = new FInt(fallSpeed_e);
         fallAccel = new FInt(fallAccel_e);
+        runSpeed = new FInt(runSpeed_e);
         position = new FVector(new FInt(transform.position.x), new FInt(transform.position.y));
 
         transform.position = new Vector3(position.x.ToFloat(), position.y.ToFloat(), 0);
@@ -27,38 +28,63 @@ public class Player : PhysicsMover {
     public override FVector ApplyInput(FVector vel)
     {
         float xInput = Input.GetAxis("Horizontal");
-        if (carried)
+        if (grounded)
         {
             if (xInput > 0)
             {
-                vel.x += horizontalAirSpeed * PhysicsManager.timestep;
+                vel.x = runSpeed;
             }
             else if (xInput < 0)
             {
-                vel.x -= horizontalAirSpeed * PhysicsManager.timestep;
-            }
-        }
-        else
-        {
-            if (xInput > 0)
-            {
-                vel.x = horizontalAirSpeed;
-            }
-            else if (xInput < 0)
-            {
-                vel.x = -horizontalAirSpeed;
+                vel.x = -runSpeed;
             }
             else
             {
                 vel.x = FInt.Zero();
             }
         }
+        else
+        {
+            if (carried)
+            {
+                if (xInput > 0)
+                {
+                    vel.x += horizontalAirSpeed * PhysicsManager.timestep;
+                }
+                else if (xInput < 0)
+                {
+                    vel.x -= horizontalAirSpeed * PhysicsManager.timestep;
+                }
+            }
+            else
+            {
+                if (xInput > 0)
+                {
+                    vel.x = horizontalAirSpeed;
+                }
+                else if (xInput < 0)
+                {
+                    vel.x = -horizontalAirSpeed;
+                }
+                else
+                {
+                    vel.x = FInt.Zero();
+                }
+            }
+        }
         return vel;
     }
 
-    public override void CollideWithBlocks(List<Tuple> blocks)
+    public override void CollideWithBlocks(bool xIsMin, List<Tuple> blocks)
     {
-        grounded = true;
+        if (xIsMin)
+        {
+        }
+        else
+        {
+            grounded = true;
+        }
+        carried = false;
         velocity = new FVector(FInt.Zero(), FInt.Zero());
     }
 }

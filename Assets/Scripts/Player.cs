@@ -79,12 +79,13 @@ public class Player : PhysicsMover {
     {
         if (xIsMin)
         {
+            velocity.x = FInt.Zero();
         }
         else
         {
+            velocity.y = FInt.Zero();
             grounded = true;
         }
         carried = false;
-        velocity = new FVector(FInt.Zero(), FInt.Zero());
     }
 }

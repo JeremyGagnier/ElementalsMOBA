@@ -103,6 +103,13 @@ public class FInt
         return ((float)rawValue) / (1 << FLOATING_BITS);
     }
 
+    public FInt Abs()
+    {
+        FInt z = new FInt();
+        z.rawValue = (rawValue < 0) ? -rawValue : rawValue;
+        return z;
+    }
+
     public int FractionalBits()
     {
         return (int)((rawValue << 48) >> 48);

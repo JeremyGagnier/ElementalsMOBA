@@ -20,8 +20,8 @@ public class Lightmap : MonoBehaviour
 	public int chunkx;
 	public int chunky;
 
-    private const float tTexDim = 16.0f;
-    private const float tPixDim = 80.0f;
+    private const float tTexDim = 256.0f;
+    private const float tPixDim = 256.0f;
     private const float tUnit = 1.0f / tPixDim;
 
 	public List<Vector3> newVertices = new List<Vector3>();
@@ -466,10 +466,10 @@ public class Lightmap : MonoBehaviour
 		{
 			for(int py = 0; py < blockHeight; py++)
 			{
-                int lightLevel = ITERATIONS - ((int)brightness[px, py] + 1) / (int)LIGHT_UNIT;
+				int lightLevel = 255 - (int)brightness[px, py];
                 if (lightLevel != 0)
                 {
-                    GenSquare(px, py, new Vector2((float)lightLevel - 1, 0));
+					GenSquare(px, py, new Vector2((float)lightLevel, 0));
                 }
 			}
 		}

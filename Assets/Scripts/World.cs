@@ -35,6 +35,9 @@ public class World : MonoBehaviour
 	private int playerCY = -1;
 
     private byte[,] emptyChunk;
+
+	private long lightingPassesDone = 0;
+	private long lightingTimeTaken = 0;
     
 	void Start ()
 	{
@@ -163,4 +166,11 @@ public class World : MonoBehaviour
         }
         return generatedChunks[new Tuple(cx, cy)].GetComponent<Blockmap>().blocks;
     }
+
+	public void RecordLightingTime(long time)
+	{
+		lightingTimeTaken += time;
+		lightingPassesDone += 1;
+		//Debug.Log ("LIGHTING: Last: " +(((float)time) / 1000f).ToString("n3") + ", Average: " + ((float)(lightingTimeTaken / lightingPassesDone) / 1000f).ToString("n3"));
+	}
 }

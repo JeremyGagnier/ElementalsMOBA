@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
+using System.Diagnostics;
 
 public class Lightmap : MonoBehaviour
 {
@@ -81,6 +82,13 @@ public class Lightmap : MonoBehaviour
             update = true;
         });
         lightThread.Start(data);
+
+		/*
+		CalculateLight(data);
+		BuildMesh();
+		bmap.Activate(brightness);
+		update = true;
+		*/
 	}
 
 	void UpdateMesh ()
@@ -247,7 +255,23 @@ public class Lightmap : MonoBehaviour
             }
             ++xIndex;
         }
+		
+		var watch = Stopwatch.StartNew();
 
+		/*
+		 * Algorithm #1
+		 * 
+		 * This algorithm goes through every block ITERATIONS times.
+		 * 
+		 * Worse Case:
+		 * Array index count: O(ITERATIONS * (2 * ITERATIONS + blockWidth) * (2 * ITERATIONS + blockHeight) * 9)
+		 * Arithmetic operations count: O(ITERATIONS * (2 * ITERATIONS + blockWidth) * (2 * ITERATIONS + blockHeight) * 18)
+		 * 
+		 * Best Case:
+		 * Array index count: O(ITERATIONS * (2 * ITERATIONS + blockWidth) * (2 * ITERATIONS + blockHeight))
+		 * Arithmetic operations count: O(1)
+		 */
+		/*
         byte[,] oldBrightness;
         for (int i = 0; i < ITERATIONS; ++i)
         {
@@ -277,18 +301,163 @@ public class Lightmap : MonoBehaviour
                 }
             }
         }
+		*/
 
-        oldBrightness = brightness;
+		/*
+		 * Algorithm #2
+		 * 
+		 * This algorithm does one pass over every block and then only goes through blocks
+		 * that could potentially change their light value.
+		 * 
+		 * Testing has shown Algorithm #2 to be approximately twice as fast als Algorithm #1
+		 * 
+		 * Best Case:
+		 * 
+		 * Worse Case:
+		 * 
+		 */
 
-        brightness = new byte[blockWidth, blockHeight];
+		// Pick up initial set of changed blocks
+		HashSet<Tuple> changed = new HashSet<Tuple>();
+		for (int x = 1; x < blockWidth + 2 * ITERATIONS + 1; ++x)
+		{
+			for (int y = 1; y < blockHeight + 2 * ITERATIONS + 1; ++y)
+			{
+				if (blocks[x, y] == 0)
+				{
+					brightness[x, y] = 255;
+					if (blocks[x - 1, y - 1] != 0)
+					{
+						changed.Add(new Tuple(x - 1, y - 1));
+					}
+					if (blocks[x - 1, y] != 0)
+					{
+						changed.Add(new Tuple(x - 1, y));
+					}
+					if (blocks[x - 1, y + 1] != 0)
+					{
+						changed.Add(new Tuple(x - 1, y + 1));
+					}
+					if (blocks[x, y - 1] != 0)
+					{
+						changed.Add(new Tuple(x, y - 1));
+					}
+					if (blocks[x, y + 1] != 0)
+					{
+						changed.Add(new Tuple(x, y + 1));
+					}
+					if (blocks[x + 1, y - 1] != 0)
+					{
+						changed.Add(new Tuple(x + 1, y - 1));
+					}
+					if (blocks[x + 1, y] != 0)
+					{
+						changed.Add(new Tuple(x + 1, y));
+					}
+					if (blocks[x + 1, y + 1] != 0)
+					{
+						changed.Add(new Tuple(x + 1, y + 1));
+					}
+				}
+			}
+		}
 
-        for (int x = 0; x < blockWidth; ++x)
-        {
-            for (int y = 0; y < blockHeight; ++y)
-            {
-                brightness[x, y] = oldBrightness[x + ITERATIONS + 1, y + ITERATIONS + 1];
-            }
-        }
+		byte[,] oldBrightness = brightness;
+		HashSet<Tuple> oldChanged;
+		for (int i = 0; i < ITERATIONS; ++i)
+		{
+			oldBrightness = brightness;
+
+			oldChanged = changed;
+			changed = new HashSet<Tuple>();
+
+			foreach (Tuple pos in oldChanged)
+			{
+				// Check to confirm that the position being updated is within bounds
+				// It's technically faster to check before adding the position to the set
+				if (pos.x <= 0 || pos.x > blockWidth + 2 * ITERATIONS ||
+				    pos.y <= 0 || pos.y > blockHeight + 2 * ITERATIONS)
+				{
+					continue;
+				}
+
+				// Determine our maximal light value at this point in time.
+				byte lightValue = (byte)Mathf.Max(0,
+		                                          oldBrightness[pos.x, pos.y + 1] - BLOCK_REDUCTION * LIGHT_UNIT,
+				                                  oldBrightness[pos.x, pos.y - 1] - BLOCK_REDUCTION * LIGHT_UNIT,
+				                                  oldBrightness[pos.x + 1, pos.y] - BLOCK_REDUCTION * LIGHT_UNIT,
+				                                  oldBrightness[pos.x + 1, pos.y - 1] - BLOCK_REDUCTION * DIAGONAL_UNIT,
+				                                  oldBrightness[pos.x + 1, pos.y + 1] - BLOCK_REDUCTION * DIAGONAL_UNIT,
+				                                  oldBrightness[pos.x - 1, pos.y] - BLOCK_REDUCTION * LIGHT_UNIT,
+				                                  oldBrightness[pos.x - 1, pos.y - 1] - BLOCK_REDUCTION * DIAGONAL_UNIT,
+				                                  oldBrightness[pos.x - 1, pos.y + 1] - BLOCK_REDUCTION * DIAGONAL_UNIT);
+				brightness[pos.x, pos.y] = lightValue;
+
+				// Check our neighbors to see if they should be updated.
+				if (oldBrightness[pos.x - 1, pos.y - 1] < lightValue - DIAGONAL_UNIT * BLOCK_REDUCTION)
+				{
+					changed.Add(new Tuple(pos.x - 1, pos.y - 1));
+				}
+				if (oldBrightness[pos.x - 1, pos.y] < lightValue - LIGHT_UNIT * BLOCK_REDUCTION)
+				{
+					changed.Add(new Tuple(pos.x - 1, pos.y));
+				}
+				if (oldBrightness[pos.x - 1, pos.y + 1] < lightValue - DIAGONAL_UNIT * BLOCK_REDUCTION)
+				{
+					changed.Add(new Tuple(pos.x - 1, pos.y + 1));
+				}
+				if (oldBrightness[pos.x, pos.y - 1] < lightValue - LIGHT_UNIT * BLOCK_REDUCTION)
+				{
+					changed.Add(new Tuple(pos.x, pos.y - 1));
+				}
+				if (oldBrightness[pos.x, pos.y + 1] < lightValue - LIGHT_UNIT * BLOCK_REDUCTION)
+				{
+					changed.Add(new Tuple(pos.x, pos.y + 1));
+				}
+				if (oldBrightness[pos.x + 1, pos.y - 1] < lightValue - DIAGONAL_UNIT * BLOCK_REDUCTION)
+				{
+					changed.Add(new Tuple(pos.x + 1, pos.y - 1));
+				}
+				if (oldBrightness[pos.x + 1, pos.y] < lightValue - LIGHT_UNIT * BLOCK_REDUCTION)
+				{
+					changed.Add(new Tuple(pos.x + 1, pos.y));
+				}
+				if (oldBrightness[pos.x + 1, pos.y + 1] < lightValue - DIAGONAL_UNIT * BLOCK_REDUCTION)
+				{
+					changed.Add(new Tuple(pos.x + 1, pos.y + 1));
+				}
+			}
+		}
+
+		/*
+		 * Algorithm #3
+		 * 
+		 * This algorighm uses a lot of memory to keep track of every light within range for
+		 * every block. Then you just calculate the closest light for every relevant block.
+		 * 
+		 * Best Case:
+		 * 
+		 * Worst Case:
+		 * 
+		 */
+
+		
+		watch.Stop ();
+		world.RecordLightingTime (watch.ElapsedMilliseconds);
+		/*
+		 * Get the brightness variable back into a size of (blockWidth, blockHeight)
+		 */
+		oldBrightness = brightness;
+		
+		brightness = new byte[blockWidth, blockHeight];
+		
+		for (int x = 0; x < blockWidth; ++x)
+		{
+			for (int y = 0; y < blockHeight; ++y)
+			{
+				brightness[x, y] = oldBrightness[x + ITERATIONS + 1, y + ITERATIONS + 1];
+			}
+		}
 	}
 
     void BuildMesh()

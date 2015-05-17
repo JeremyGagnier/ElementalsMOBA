@@ -3,20 +3,11 @@ using System.Collections;
 using System.Collections.Generic;
 
 public class Player : PhysicsMover {
-	public const int MAX_FALL_SPEED = 30;
-
-	public float moveSpeed = 10;
 
 	void Start ()
     {
-        mass = new FInt(mass_e);
-        verticalAirSpeed = new FInt(verticalAirSpeed_e);
-        horizontalAirSpeed = new FInt(horizontalAirSpeed_e);
-        fallSpeed = new FInt(fallSpeed_e);
-        fallAccel = new FInt(fallAccel_e);
-        runSpeed = new FInt(runSpeed_e);
+        base.Start();
         position = new FVector(new FInt(transform.position.x), new FInt(transform.position.y));
-
         transform.position = new Vector3(position.x.ToFloat(), position.y.ToFloat(), 0);
 	}
 
@@ -72,6 +63,35 @@ public class Player : PhysicsMover {
                 }
             }
         }
+
+        bool jump = Input.GetButton("Jump");
+        if (grounded && jump)
+        {
+            grounded = false;
+            jumping = true;
+            currentJumpDuration = new FInt(jumpDuration);
+            vel.y = new FInt(jumpSpeed);
+        }
+        else if (jumping && jump)
+        {
+            currentJumpDuration -= PhysicsManager.timestep;
+            if (currentJumpDuration.rawValue <= 0)
+            {
+                jump = false;
+            }
+            else
+            {
+                vel.y = new FInt(jumpSpeed);
+            }
+        }
+        
+        if (jumping && !jump)
+        {
+            jumping = false;
+            vel.y = new FInt(jumpEndSpeed);
+        }
+
+
         return vel;
     }
 

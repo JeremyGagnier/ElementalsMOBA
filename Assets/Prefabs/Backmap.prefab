@@ -12,7 +12,7 @@ GameObject:
   - 23: {fileID: 2386912}
   - 114: {fileID: 11486912}
   m_Layer: 0
-  m_Name: Chunk
+  m_Name: Backmap
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -69,19 +69,18 @@ MonoBehaviour:
   m_GameObject: {fileID: 186912}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0827a039b9b5d8e4fb12be3002d48b49, type: 3}
+  m_Script: {fileID: 11500000, guid: 16f9af57696e29a4183245000d08261a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  blockWidth: 0
-  blockHeight: 0
-  chunkx: 0
-  chunky: 0
+  numBlocksWide: 0
+  numBlocksHigh: 0
+  chunkPosX: 0
+  chunkPosY: 0
   newVertices: []
   newTriangles: 
   newUV: []
   update: 0
   isActive: 0
-  spotlightPrefab: {fileID: 155876, guid: ce9d03efd2faad141a5f04dee2cc1829, type: 2}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1

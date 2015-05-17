@@ -24,11 +24,13 @@ public class World : MonoBehaviour
 	public int blockHeight = 50;
 	public int chunkWidth = 1;
     public int chunkHeight = 1;
-    public GameObject chunkPrefab;
+    public GameObject blockmapPrefab;
     public GameObject lightmapPrefab;
+    public GameObject backmapPrefab;
 
-	public Dictionary<Tuple, GameObject> generatedChunks = new Dictionary<Tuple, GameObject>();
+	public Dictionary<Tuple, GameObject> generatedBlockmaps = new Dictionary<Tuple, GameObject>();
     public Dictionary<Tuple, GameObject> generatedLightmaps = new Dictionary<Tuple, GameObject>();
+    public Dictionary<Tuple, GameObject> generatedBackmaps = new Dictionary<Tuple, GameObject>();
     public List<Tuple> generationOrder = new List<Tuple>();
 	public GameObject localPlayer;
 	private int playerCX = -1;
@@ -69,14 +71,20 @@ public class World : MonoBehaviour
 						continue;
 					}
                     Tuple pos = new Tuple(x, y);
-					if (!generatedChunks.ContainsKey(pos))
+					if (!generatedBlockmaps.ContainsKey(pos))
 					{
-						GameObject blockmap = (GameObject)Instantiate (chunkPrefab);
-						generatedChunks[pos] = blockmap;
-						generationOrder.Add (pos);
-						blockmap.name = "Blockmap(" + x.ToString () + "," + y.ToString () + ")";
-						blockmap.transform.parent = this.transform;
-						blockmap.GetComponent<Blockmap> ().Setup (this, blockWidth, blockHeight, x, y);
+                        GameObject blockmap = (GameObject)Instantiate(blockmapPrefab);
+                        generatedBlockmaps[pos] = blockmap;
+                        generationOrder.Add(pos);
+                        blockmap.name = "Blockmap(" + x.ToString() + "," + y.ToString() + ")";
+                        blockmap.transform.parent = this.transform;
+                        blockmap.GetComponent<Blockmap>().Setup(this, blockWidth, blockHeight, x, y);
+                        
+                        GameObject backmap = (GameObject)Instantiate(backmapPrefab);
+                        generatedBackmaps[pos] = backmap;
+                        backmap.name = "Backmap(" + x.ToString() + "," + y.ToString() + ")";
+                        backmap.transform.parent = this.transform;
+                        backmap.GetComponent<Backmap>().Setup(this, blockWidth, blockHeight, x, y);
 
                         GameObject lightmap = (GameObject)Instantiate(lightmapPrefab);
                         generatedLightmaps[pos] = lightmap;
@@ -99,10 +107,11 @@ public class World : MonoBehaviour
                     Tuple pos = new Tuple(x, y);
 
                     Lightmap lmap = generatedLightmaps[pos].GetComponent<Lightmap>();
-                    Blockmap bmap = generatedChunks[pos].GetComponent<Blockmap>();
+                    Blockmap bmap = generatedBlockmaps[pos].GetComponent<Blockmap>();
+                    Backmap bkmap = generatedBackmaps[pos].GetComponent<Backmap>();
                     if (!lmap.isActive)
                     {
-                        lmap.Activate(bmap);
+                        lmap.Activate(bmap, bkmap);
                     }
 				}
 			}
@@ -116,8 +125,11 @@ public class World : MonoBehaviour
                     if (pcx + 3 < generationOrder[i].x || pcx - 3 > generationOrder[i].x ||
                         pcy + 3 < generationOrder[i].y || pcy - 3 > generationOrder[i].y)
                     {
-                        DestroyObject(generatedChunks[generationOrder[i]]);
-                        generatedChunks.Remove(generationOrder[i]);
+                        DestroyObject(generatedBlockmaps[generationOrder[i]]);
+                        generatedBlockmaps.Remove(generationOrder[i]);
+
+                        DestroyObject(generatedBackmaps[generationOrder[i]]);
+                        generatedBackmaps.Remove(generationOrder[i]);
 
                         DestroyObject(generatedLightmaps[generationOrder[i]]);
                         generatedLightmaps.Remove(generationOrder[i]);
@@ -139,7 +151,7 @@ public class World : MonoBehaviour
 			int by = blockHoverY % blockHeight;
 			if (BlockAt (cx, cy, bx, by) != 0)
 		    {
-                generatedChunks[new Tuple(cx, cy)].GetComponent<Blockmap>().DestroyBlock(bx, by);
+                generatedBlockmaps[new Tuple(cx, cy)].GetComponent<Blockmap>().DestroyBlock(bx, by);
 			}
 		}
 	}
@@ -150,7 +162,7 @@ public class World : MonoBehaviour
 		{
 			return (byte)1;
 		}
-        return generatedChunks[new Tuple(cx, cy)].GetComponent<Blockmap>().blocks[bx, by];
+        return generatedBlockmaps[new Tuple(cx, cy)].GetComponent<Blockmap>().blocks[bx, by];
 	}
 
     public byte BlockAt(int x, int y)
@@ -158,19 +170,42 @@ public class World : MonoBehaviour
         return BlockAt(x / blockWidth, y / blockHeight, x % blockWidth, y % blockHeight);
     }
 
-    public byte[,] ChunkAt(int cx, int cy)
+    public byte[,] BlockmapAt(int cx, int cy)
     {
         if (cx < 0 || cx >= chunkWidth || cy < 0 || cy >= chunkHeight)
         {
             return emptyChunk;
         }
-        return generatedChunks[new Tuple(cx, cy)].GetComponent<Blockmap>().blocks;
+        return generatedBlockmaps[new Tuple(cx, cy)].GetComponent<Blockmap>().blocks;
+    }
+
+    public byte BackAt(int cx, int cy, int bx, int by)
+    {
+        if (cx < 0 || cx >= chunkWidth || cy < 0 || cy >= chunkHeight)
+        {
+            return (byte)1;
+        }
+        return generatedBackmaps[new Tuple(cx, cy)].GetComponent<Backmap>().bgBlocks[bx, by];
+    }
+
+    public byte BackAt(int x, int y)
+    {
+        return BackAt(x / blockWidth, y / blockHeight, x % blockWidth, y % blockHeight);
+    }
+
+    public byte[,] BackmapAt(int cx, int cy)
+    {
+        if (cx < 0 || cx >= chunkWidth || cy < 0 || cy >= chunkHeight)
+        {
+            return emptyChunk;
+        }
+        return generatedBackmaps[new Tuple(cx, cy)].GetComponent<Backmap>().bgBlocks;
     }
 
 	public void RecordLightingTime(long time)
 	{
 		lightingTimeTaken += time;
 		lightingPassesDone += 1;
-		//Debug.Log ("LIGHTING: Last: " +(((float)time) / 1000f).ToString("n3") + ", Average: " + ((float)(lightingTimeTaken / lightingPassesDone) / 1000f).ToString("n3"));
+		Debug.Log ("LIGHTING: Last: " +(((float)time) / 1000f).ToString("n3") + ", Average: " + ((float)(lightingTimeTaken / lightingPassesDone) / 1000f).ToString("n3"));
 	}
 }

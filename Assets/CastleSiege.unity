@@ -145,8 +145,9 @@ MonoBehaviour:
   blockHeight: 40
   chunkWidth: 30
   chunkHeight: 10
-  chunkPrefab: {fileID: 186912, guid: 21681c11d6feee740a12a309070132f2, type: 2}
+  blockmapPrefab: {fileID: 186912, guid: 21681c11d6feee740a12a309070132f2, type: 2}
   lightmapPrefab: {fileID: 186912, guid: 6549a5e82a3dccb4d96cb9bd8746abde, type: 2}
+  backmapPrefab: {fileID: 186912, guid: f562e23aab6cdca41812607cfb5b53b1, type: 2}
   generationOrder: []
   localPlayer: {fileID: 1660587163}
 --- !u!4 &976218301

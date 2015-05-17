@@ -11,29 +11,46 @@ public class PhysicsMover : MonoBehaviour {
     public float mass_e;
     public FInt mass;
 
-    // Measured in blocks per second
     public float runSpeed_e;
     public FInt runSpeed;
 
-    // Measured in blocks per second
+    /*
+     * Air movement variables
+     */
     public float verticalAirSpeed_e;
     public FInt verticalAirSpeed;
 
-    // Measured in blocks per second
     public float horizontalAirSpeed_e;
     public FInt horizontalAirSpeed;
 
-    // Measure in blocks per second
     public float fallSpeed_e;
     public FInt fallSpeed;
 
-    // Measured in blocks per second squared
     public float fallAccel_e;
     public FInt fallAccel;
 
+    /*
+     * Jump variables
+     */
+    public float jumpSpeed_e;
+    public FInt jumpSpeed;
+
+    public float jumpDuration_e;
+    public FInt jumpDuration;
+
+    public float jumpEndSpeed_e;
+    public FInt jumpEndSpeed;
+
+    public FInt currentJumpDuration = FInt.Zero();
+
+    /*
+     * Important state variables
+     */
     public bool allowInput = true;
     public bool carried = false;
     public bool grounded = false;
+    public bool jumping = false;
+    public bool facingRight = true;
 
     //public Tuple position_e = new Tuple(0, 0);
     public FVector position = new FVector(FInt.Zero(), FInt.Zero());
@@ -71,7 +88,7 @@ public class PhysicsMover : MonoBehaviour {
         }
     }
 
-    void Start()
+    public void Start()
     {
         mass = new FInt(mass_e);
         verticalAirSpeed = new FInt(verticalAirSpeed_e);
@@ -79,7 +96,10 @@ public class PhysicsMover : MonoBehaviour {
         fallSpeed = new FInt(fallSpeed_e);
         fallAccel = new FInt(fallAccel_e);
         runSpeed = new FInt(runSpeed_e);
-        //position = new FVector(new FInt(position_e.x), new FInt(position_e.y));
+        jumpSpeed = new FInt(jumpSpeed_e);
+        jumpDuration = new FInt(jumpDuration_e);
+        jumpEndSpeed = new FInt(jumpEndSpeed_e);
+
     }
 
     public virtual FVector ApplyInput(FVector vel)

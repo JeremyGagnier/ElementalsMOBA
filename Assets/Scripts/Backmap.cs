@@ -3,9 +3,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-public class Blockmap : MonoBehaviour
+public class Backmap : MonoBehaviour
 {
-	public byte[,] blocks;
+	public byte[,] bgBlocks;
 
 	private World world;
 	public int numBlocksWide;
@@ -46,10 +46,10 @@ public class Blockmap : MonoBehaviour
 		this.GenTerrain ();
 	}
 
-	public void Activate (byte[,] brightness)
+	public void Activate (byte[,] brightness, byte[,] blockmap)
     {
         isActive = true;
-        BuildMesh(brightness);
+        BuildMesh(brightness, blockmap);
         update = true;
 	}
 
@@ -107,7 +107,7 @@ public class Blockmap : MonoBehaviour
 
 	void GenTerrain()
 	{
-		blocks = new byte[numBlocksWide, numBlocksHigh];
+		bgBlocks = new byte[numBlocksWide, numBlocksHigh];
 
 		for(int px = 0; px < numBlocksWide; px++)
 		{
@@ -127,44 +127,40 @@ public class Blockmap : MonoBehaviour
 				int truepy = py + chunkPosY*numBlocksHigh;
 				if (truepy < stone)
 				{
-					if (Noise(truepx, truepy*2, 16, 14, 1) > 10)
+					if (Noise(truepx, truepy, 12, 16, 1) > 10)
 					{
-						blocks[px, py] = 0;
-					}
-					else if (Noise(truepx, truepy, 12, 16, 1) > 10)
-					{
-						blocks[px, py] = 2;
+						bgBlocks[px, py] = 2;
 					}
 					else
 					{
-						blocks[px, py] = 1;
+						bgBlocks[px, py] = 1;
 					}
 				}
 				else if (truepy < dirt)
 				{
-					blocks[px,py] = 2;
+					bgBlocks[px, py] = 2;
 				}
 			}
 		}
 	}
 
-	void BuildMesh (byte[,] brightness)
+	void BuildMesh (byte[,] brightness, byte[,] blockmap)
 	{
 		for(int px = 0; px < numBlocksWide; px++)
 		{
 			for(int py = 0; py < numBlocksHigh; py++)
 			{
-				if(blocks[px, py] != 0 && brightness[px, py] != 0)
+				if(bgBlocks[px, py] != 0 && blockmap[px,py] == 0 && brightness[px, py] != 0)
 				{
-					if (blocks[px, py] == 1)
+					if (bgBlocks[px, py] == 1)
 					{
 						GenSquare (px, py, tStone);
 					}
-					else if (blocks[px,py] == 2)
+					else if (bgBlocks[px,py] == 2)
 					{
 						GenSquare (px, py, tGrass);
 					}
-                    else if (blocks[px, py] == 3)
+                    else if (bgBlocks[px, py] == 3)
                     {
                         GenSquare(px, py, tStoneWall);
                     }
@@ -209,13 +205,13 @@ public class Blockmap : MonoBehaviour
 		{
 			return world.BlockAt (cx, cy, bx, by);
 		}
-		return blocks[x,y];
+		return bgBlocks[x,y];
 	}
 
 	public int DestroyBlock (int bx, int by)
 	{
-		int oldBlock = blocks[bx, by];
-		blocks[bx, by] = 0;
+		int oldBlock = bgBlocks[bx, by];
+		bgBlocks[bx, by] = 0;
 
 		return oldBlock;
 	}

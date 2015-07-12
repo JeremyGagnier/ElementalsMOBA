@@ -37,10 +37,7 @@ public class FInt
 
     public FInt(FInt other)
     {
-		if (other != null)
-		{
-			rawValue = other.rawValue;
-		}
+		rawValue = other.rawValue;
     }
 
     public FInt(int value)

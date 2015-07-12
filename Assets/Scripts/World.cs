@@ -206,6 +206,6 @@ public class World : MonoBehaviour
 	{
 		lightingTimeTaken += time;
 		lightingPassesDone += 1;
-		Debug.Log ("LIGHTING: Last: " +(((float)time) / 1000f).ToString("n3") + ", Average: " + ((float)(lightingTimeTaken / lightingPassesDone) / 1000f).ToString("n3"));
+		//Debug.Log ("LIGHTING: Last: " +(((float)time) / 1000f).ToString("n3") + ", Average: " + ((float)(lightingTimeTaken / lightingPassesDone) / 1000f).ToString("n3"));
 	}
 }

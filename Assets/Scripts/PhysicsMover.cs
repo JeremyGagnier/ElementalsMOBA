@@ -56,6 +56,8 @@ public class PhysicsMover : MonoBehaviour {
     public FVector position = new FVector(FInt.Zero(), FInt.Zero());
     public FVector velocity = new FVector(FInt.Zero(), FInt.Zero());
 
+    public PhysicsManager pManager;
+
     void OnDrawGizmos()
     {
         foreach (Vector4 pos in hitbox)

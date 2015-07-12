@@ -4,16 +4,15 @@ using System.Collections.Generic;
 
 public class Player : PhysicsMover {
 
-	void Start ()
+    public FInt feetPos;
+    public float feetPos_e;
+
+	new void Start ()
     {
         base.Start();
+        feetPos = new FInt(feetPos_e);
         position = new FVector(new FInt(transform.position.x), new FInt(transform.position.y));
         transform.position = new Vector3(position.x.ToFloat(), position.y.ToFloat(), 0);
-	}
-
-	void Update ()
-	{
-
 	}
 
     public override FVector ApplyInput(FVector vel)
@@ -99,7 +98,42 @@ public class Player : PhysicsMover {
     {
         if (xIsMin)
         {
-            velocity.x = FInt.Zero();
+            bool climb = false;
+            float xInput = Input.GetAxis("Horizontal");
+            if (xInput * velocity.x.ToFloat() > 0)
+            {
+                if (blocks.Count != 0)
+                {
+                    int highestBlock = blocks[0].y;
+                    foreach (Tuple pos in blocks)
+                    {
+                        if (pos.y > highestBlock)
+                        {
+                            highestBlock = pos.y;
+                        }
+                    }
+                    float smallestBox = hitbox[0].y;
+                    foreach (Vector4 box in hitbox)
+                    {
+                        if (box.y < smallestBox)
+                        {
+                            smallestBox = box.y;
+                        }
+                    }
+                    FInt boxY = new FInt(smallestBox) + position.y;
+                    FInt blockY = new FInt(highestBlock);
+                    if (blockY < boxY + FInt.One())
+                    {
+                        position.y += FInt.One();
+                        position.y -= FInt.RawFInt((position.y + FInt.RawFInt(feetPos.FractionalBits())).FractionalBits());
+                        climb = true;
+                    }
+                }
+            }
+            if (!climb)
+            {
+                velocity.x = FInt.Zero();
+            }
         }
         else
         {

@@ -134,6 +134,8 @@ MonoBehaviour:
   grounded: 0
   jumping: 0
   facingRight: 1
+  pManager: {fileID: 0}
+  feetPos_e: 1.5
 --- !u!124 &12476734
 Behaviour:
   m_ObjectHideFlags: 1

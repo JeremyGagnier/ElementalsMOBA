@@ -15,6 +15,10 @@ public class PhysicsManager : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
         movers = new List<PhysicsMover>(FindObjectsOfType<PhysicsMover>());
+        foreach (PhysicsMover mover in movers)
+        {
+            mover.pManager = this;
+        }
 	}
 	
 	void FixedUpdate () {
@@ -157,6 +161,12 @@ public class PhysicsManager : MonoBehaviour {
                 }
             }
 
+            if (minTimestep.rawValue <= 0)
+            {
+                Debug.LogWarning("Stepped by " + minTimestep.rawValue.ToString() + ", exiting while loop!!!");
+                break;
+            }
+
             mover.position += mover.velocity * minTimestep;
             step -= minTimestep;
 
@@ -179,15 +189,15 @@ public class PhysicsManager : MonoBehaviour {
         }
     }
 
-    private List<Tuple> CheckMoverCollision(PhysicsMover mover, bool xIsMin)
+    public List<Tuple> CheckMoverCollision(PhysicsMover mover, bool xIsMin)
     {
         List<Tuple> blocksHit = new List<Tuple>();
         foreach (Vector4 pos in mover.hitbox)
         {
             int xMin = (mover.position.x + pos.x).ToInt() - 1;
-            int xMax = (mover.position.x + pos.x + pos.z - FInt.RawFInt(1)).ToInt() + 1;
+            int xMax = (mover.position.x + pos.x + pos.z + FInt.RawFInt(1)).ToInt() + 1;
             int yMin = (mover.position.y + pos.y).ToInt() - 1;
-            int yMax = (mover.position.y + pos.y + pos.w - FInt.RawFInt(1)).ToInt() + 1;
+            int yMax = (mover.position.y + pos.y + pos.w + FInt.RawFInt(1)).ToInt() + 1;
 
             if (xIsMin)
             {

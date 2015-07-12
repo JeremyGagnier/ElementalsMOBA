@@ -37,7 +37,10 @@ public class FInt
 
     public FInt(FInt other)
     {
-        rawValue = other.rawValue;
+		if (other != null)
+		{
+			rawValue = other.rawValue;
+		}
     }
 
     public FInt(int value)
@@ -112,7 +115,7 @@ public class FInt
 
     public int FractionalBits()
     {
-        return (int)((rawValue << 48) >> 48);
+        return (int)(((ulong)(rawValue << 48)) >> 48);
     }
 
     public static FInt operator +(FInt x, FInt y)

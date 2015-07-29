@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
+[System.Serializable]
 public struct FVector
 {
     public FInt x;
@@ -25,6 +26,7 @@ public struct FVector
     }
 }
 
+[System.Serializable]
 public class FInt
 {
     public const int FLOATING_BITS = 16;

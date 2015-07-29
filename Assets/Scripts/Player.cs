@@ -112,15 +112,15 @@ public class Player : PhysicsMover {
                             highestBlock = pos.y;
                         }
                     }
-                    float smallestBox = hitbox[0].y;
-                    foreach (Vector4 box in hitbox)
+                    FInt smallestBox = hitbox[0].y;
+                    foreach (PhysBox box in hitbox)
                     {
                         if (box.y < smallestBox)
                         {
                             smallestBox = box.y;
                         }
                     }
-                    FInt boxY = new FInt(smallestBox) + position.y;
+                    FInt boxY = smallestBox + position.y;
                     FInt blockY = new FInt(highestBlock);
                     if (blockY < boxY + FInt.One())
                     {

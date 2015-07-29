@@ -85,11 +85,12 @@ public class PhysicsManager : MonoBehaviour {
         {
             bool xIsMin = true;
             FInt minTimestep = new FInt(step);
-            foreach (Vector4 pos in mover.hitbox)
+            foreach (PhysBox pos in mover.hitbox)
             {
                 FInt xTime = FInt.Max();
                 FInt yTime = FInt.Max();
 
+                // Set the left and right x boundaries given the direction of motion.
                 if (mover.velocity.x < FInt.Zero())
                 {
                     int minX = (mover.position.x + pos.x).ToInt();
@@ -98,12 +99,16 @@ public class PhysicsManager : MonoBehaviour {
                 }
                 else if (mover.velocity.x > FInt.Zero())
                 {
-                    int maxX = (mover.position.x + pos.x + pos.z - FInt.RawFInt(1)).ToInt() + 1;
-                    FInt maxOffX = new FInt(maxX) - (mover.position.x + pos.x + pos.z);
+                    int maxX = (mover.position.x + pos.x + pos.w - FInt.RawFInt(1)).ToInt() + 1;
+                    FInt maxOffX = new FInt(maxX) - (mover.position.x + pos.x + pos.w);
                     xTime = maxOffX / mover.velocity.x;
                 }
+
+                // If we're entering a new x unit without moving first do some stuff.
                 if (xTime.rawValue == 0)
                 {
+                    // Find if we will be colliding with any blocks in the x direction. This should
+                    // change our x velocity so that we won't collide again until the next frame.
                     List<Tuple> reCollide = CheckMoverCollision(mover, true);
                     if (reCollide.Count != 0)
                     {
@@ -115,6 +120,8 @@ public class PhysicsManager : MonoBehaviour {
                     }
                     else
                     {
+                        // If we're not going to collide with anything then update the position up to the
+                        // next possible collision.
                         xTime = FInt.One() / mover.velocity.x.Abs();
                     }
                 }
@@ -127,8 +134,8 @@ public class PhysicsManager : MonoBehaviour {
                 }
                 else if (mover.velocity.y > FInt.Zero())
                 {
-                    int maxY = (mover.position.y + pos.y + pos.w - FInt.RawFInt(1)).ToInt() + 1;
-                    FInt maxOffY = new FInt(maxY) - (mover.position.y + pos.y + pos.w);
+                    int maxY = (mover.position.y + pos.y + pos.h - FInt.RawFInt(1)).ToInt() + 1;
+                    FInt maxOffY = new FInt(maxY) - (mover.position.y + pos.y + pos.h);
                     yTime = maxOffY / mover.velocity.y;
                 }
                 if (yTime.rawValue == 0)
@@ -189,15 +196,21 @@ public class PhysicsManager : MonoBehaviour {
         }
     }
 
+    /// <summary>
+    /// Check if there are blocks in the x or y direction that we're moving in.
+    /// </summary>
+    /// <param name="mover"></param>
+    /// <param name="xIsMin"></param>
+    /// <returns></returns>
     public List<Tuple> CheckMoverCollision(PhysicsMover mover, bool xIsMin)
     {
         List<Tuple> blocksHit = new List<Tuple>();
-        foreach (Vector4 pos in mover.hitbox)
+        foreach (PhysBox pos in mover.hitbox)
         {
             int xMin = (mover.position.x + pos.x).ToInt() - 1;
-            int xMax = (mover.position.x + pos.x + pos.z + FInt.RawFInt(1)).ToInt() + 1;
+            int xMax = (mover.position.x + pos.x + pos.w + FInt.RawFInt(1)).ToInt() + 1;
             int yMin = (mover.position.y + pos.y).ToInt() - 1;
-            int yMax = (mover.position.y + pos.y + pos.w + FInt.RawFInt(1)).ToInt() + 1;
+            int yMax = (mover.position.y + pos.y + pos.h + FInt.RawFInt(1)).ToInt() + 1;
 
             if (xIsMin)
             {
@@ -227,11 +240,11 @@ public class PhysicsManager : MonoBehaviour {
 
     private bool IsGrounded(PhysicsMover mover)
     {
-        foreach (Vector4 pos in mover.hitbox)
+        foreach (PhysBox pos in mover.hitbox)
         {
             int yPos = (mover.position.y + pos.y).ToInt() - 1;
             int xMin = (mover.position.x + pos.x).ToInt() - 1;
-            int xMax = (mover.position.x + pos.x + pos.z - FInt.RawFInt(1)).ToInt() + 1;
+            int xMax = (mover.position.x + pos.x + pos.w - FInt.RawFInt(1)).ToInt() + 1;
             for (int x = xMin + 1; x < xMax; ++x)
             {
                 if (world.BlockAt(x, yPos) != 0)

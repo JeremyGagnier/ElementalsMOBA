@@ -2,10 +2,19 @@
 using System.Collections;
 using System.Collections.Generic;
 
+[System.Serializable]
+public struct PhysBox
+{
+    public FInt x;
+    public FInt y;
+    public FInt w;
+    public FInt h;
+};
+
 public class PhysicsMover : MonoBehaviour {
 
     [SerializeField]
-    public List<Vector4> hitbox;
+    public List<PhysBox> hitbox;
 
     // Measured with block of dirt = 1
     public float mass_e;
@@ -60,12 +69,12 @@ public class PhysicsMover : MonoBehaviour {
 
     void OnDrawGizmos()
     {
-        foreach (Vector4 pos in hitbox)
+        foreach (PhysBox pos in hitbox)
         {
             int xMin = (new FInt(transform.position.x) + pos.x).ToInt() - 1;
-            int xMax = (new FInt(transform.position.x) + pos.x + pos.z - FInt.RawFInt(256)).ToInt() + 1;
+            int xMax = (new FInt(transform.position.x) + pos.x + pos.w - FInt.RawFInt(256)).ToInt() + 1;
             int yMin = (new FInt(transform.position.y) + pos.y).ToInt() - 1;
-            int yMax = (new FInt(transform.position.y) + pos.y + pos.w - FInt.RawFInt(256)).ToInt() + 1;
+            int yMax = (new FInt(transform.position.y) + pos.y + pos.h - FInt.RawFInt(256)).ToInt() + 1;
 
             Gizmos.color = new Color(0, 0, 1, 0.35f);
             for (int x = xMin + 1; x < xMax; ++x)

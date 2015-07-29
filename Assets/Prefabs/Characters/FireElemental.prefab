@@ -119,22 +119,61 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   hitbox:
-  - {x: -.899999976, y: -1.5, z: 1.79999995, w: 3}
+  - x:
+      rawValue: -65536
+    y:
+      rawValue: -98304
+    w:
+      rawValue: 131072
+    h:
+      rawValue: 196608
   mass_e: 9
+  mass:
+    rawValue: 0
   runSpeed_e: 15
+  runSpeed:
+    rawValue: 0
   verticalAirSpeed_e: 2
+  verticalAirSpeed:
+    rawValue: 0
   horizontalAirSpeed_e: 7.5
+  horizontalAirSpeed:
+    rawValue: 0
   fallSpeed_e: 150
+  fallSpeed:
+    rawValue: 0
   fallAccel_e: 50
+  fallAccel:
+    rawValue: 0
   jumpSpeed_e: 20
+  jumpSpeed:
+    rawValue: 0
   jumpDuration_e: .200000003
+  jumpDuration:
+    rawValue: 0
   jumpEndSpeed_e: 10
+  jumpEndSpeed:
+    rawValue: 0
+  currentJumpDuration:
+    rawValue: 0
   allowInput: 1
   carried: 0
   grounded: 0
   jumping: 0
   facingRight: 1
+  position:
+    x:
+      rawValue: 0
+    y:
+      rawValue: 0
+  velocity:
+    x:
+      rawValue: 0
+    y:
+      rawValue: 0
   pManager: {fileID: 0}
+  feetPos:
+    rawValue: 0
   feetPos_e: 1.5
 --- !u!124 &12476734
 Behaviour:

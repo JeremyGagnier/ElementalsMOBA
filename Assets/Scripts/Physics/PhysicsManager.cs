@@ -8,21 +8,16 @@ public class PhysicsManager : MonoBehaviour {
 
     public World world;
 
-    public static int frame = 0;
-
     List<PhysicsMover> movers = new List<PhysicsMover>();
 
 	// Use this for initialization
-	void Start () {
+	void Start ()
+    {
         movers = new List<PhysicsMover>(FindObjectsOfType<PhysicsMover>());
         foreach (PhysicsMover mover in movers)
         {
             mover.pManager = this;
         }
-	}
-	
-	void FixedUpdate () {
-        Advance(1);
 	}
 
     public void AddMover(PhysicsMover mover)
@@ -30,18 +25,17 @@ public class PhysicsManager : MonoBehaviour {
         movers.Add(mover);
     }
 
-    private void Advance(int frames)
+    public void Advance(int frames)
     {
-        for (int i = 0; i < frames; ++i)
+        for (int f = Game.frame; f < Game.frame + frames; ++f)
         {
-            if (frame > 10)         // Don't do anything until the game scene is loaded
+            if (Game.frame > 10)         // Don't do anything until the game scene is loaded
             {
                 foreach (PhysicsMover mover in movers)
                 {
                     MoveMover(mover);
                 }
             }
-            ++frame;
         }
     }
 

@@ -115,6 +115,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   physicsPrefab: {fileID: 145160, guid: fa2fdb545cc368b459b65e3d060a0297, type: 2}
+  combatPrefab: {fileID: 150638, guid: 9fcc590889c5e2542a30ddcfa07d762e, type: 2}
   worldPrefab: {fileID: 196540, guid: cf3ecf57ff1a1a64c80a9b994a6c058a, type: 2}
   fireElemental: {fileID: 181788, guid: b42ab6ba01092c44b9daa46899a71afd, type: 2}
 --- !u!4 &646094110

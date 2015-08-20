@@ -4,16 +4,21 @@ using System.Collections;
 public class Game : MonoBehaviour
 {
     public GameObject physicsPrefab;
+    public GameObject combatPrefab;
     public GameObject worldPrefab;
     public GameObject fireElemental;
 
     private PhysicsManager physics = null;
+    private CombatManager combat = null;
     private World world = null;
+
+    public static int frame = 0;
 
 	void Start ()
     {
         // Create the fundamental classes and set them up
         physics = Instantiate(physicsPrefab).GetComponent<PhysicsManager>();
+        combat = Instantiate(combatPrefab).GetComponent<CombatManager>();
         world = Instantiate(worldPrefab).GetComponent<World>();
         physics.world = world;
 
@@ -24,11 +29,18 @@ public class Game : MonoBehaviour
     {
         GameObject player = Instantiate(elemental);
         world.localPlayer = player;
-        physics.AddMover(player.GetComponent<Player>());
+        physics.AddMover(player.GetComponent<PhysPlayer>());
     }
 
-	void Update ()
+	void FixedUpdate()
     {
-	
+        // An interesting point here is that while combat and physics are co-dependant they can be stepped independantly.
+        // In the general sense physics handles motion and position while combat handles moves and damage.
+        // However moves are dependant on position and position and motion are dependant on moves.
+        // For example a move will put a hitboxes relative to the players position and will periodically
+        // change the location of the character as well as change where the hurtboxes are from animations.
+        physics.Advance(1);
+        combat.Advance(1);
+        frame += 1;
 	}
 }

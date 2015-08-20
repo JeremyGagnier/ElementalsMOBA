@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class Player : PhysicsMover {
+public class PhysPlayer : PhysicsMover {
 
     public FInt feetPos;
     public float feetPos_e;

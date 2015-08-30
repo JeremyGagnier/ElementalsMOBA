@@ -4,4 +4,6 @@ using System.Collections.Generic;
 
 public class Player : Combatent
 {
+    public int health = 0;
+
 }

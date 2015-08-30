@@ -7,6 +7,12 @@ public struct FVector
     public FInt x;
     public FInt y;
 
+    public FVector(FVector z)
+    {
+        x = new FInt(z.x);
+        y = new FInt(z.y);
+    }
+
     public FVector(FInt first, FInt second)
     {
         x = first;
@@ -22,6 +28,12 @@ public struct FVector
     public static FVector operator *(FVector x, FInt y)
     {
         FVector z = new FVector(x.x * y, x.y * y);
+        return z;
+    }
+
+    public static FVector operator /(FVector x, FInt y)
+    {
+        FVector z = new FVector(x.x / y, x.y / y);
         return z;
     }
 }

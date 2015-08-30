@@ -96,6 +96,11 @@ public class PhysicsMover : MonoBehaviour {
                 Gizmos.DrawCube(new Vector3(x + 0.5f, yMin + 0.5f, 0), new Vector3(1, 1, 1));
                 Gizmos.DrawCube(new Vector3(x + 0.5f, yMax + 0.5f, 0), new Vector3(1, 1, 1));
             }
+
+            Gizmos.color = new Color(1, 1, 0, 0.4f);
+            Gizmos.DrawCube(new Vector3(transform.position.x,
+                                        transform.position.y, 0),
+                            new Vector3(pos.w.ToFloat(), pos.h.ToFloat(), 1));
         }
     }
 
@@ -120,5 +125,17 @@ public class PhysicsMover : MonoBehaviour {
 
     public virtual void CollideWithBlocks(bool xIsMin, List<Tuple> blocks)
     {
+    }
+
+    public void ApplyForce(FVector force)
+    {
+        velocity += force / mass;
+    }
+
+    public void SetVelocity(FVector vel)
+    {
+        // Need to make a new FVector since ours will change and the one we
+        // were provided probably needs to stay constant.
+        velocity = new FVector(vel);
     }
 }

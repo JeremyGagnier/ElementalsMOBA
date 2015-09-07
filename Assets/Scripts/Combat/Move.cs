@@ -45,9 +45,9 @@ public struct Hitbox
 
 public class Move
 {
+    public Combatent owner;
     public int duration;
     public int currentFrame = 0;
-    public int player;
 
     public virtual void Step(CombatManager mgr)
     {
@@ -59,7 +59,7 @@ public class Move
         }
     }
 
-    public virtual bool Trigger()
+    public virtual bool Trigger(CombatManager mgr)
     {
         return false;
     }

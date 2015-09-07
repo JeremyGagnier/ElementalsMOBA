@@ -10,8 +10,15 @@ public class CombatManager : MonoBehaviour
     public List<Hurtbox> hurtboxes;
     public List<Hitbox> hitboxes;
 
-	// Use this for initialization
-	void Start ()
+    void Awake()
+    {
+        combatents = new List<Combatent>();
+        moves = new List<Move>();
+        hurtboxes = new List<Hurtbox>();
+        hitboxes = new List<Hitbox>();
+    }
+
+	void Start()
     {
 	}
 

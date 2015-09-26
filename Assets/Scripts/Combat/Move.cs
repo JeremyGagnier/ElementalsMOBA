@@ -25,28 +25,28 @@ public struct Sphere
     public FInt r;
 };
 
-public struct Hurtbox
+public class Hurtbox
 {
     public Sphere pos;
-    public int armor;
-    public int player;
+    public int armor = 0;
+    public Combatent player = null;
 };
 
-public struct Hitbox
+public class Hitbox
 {
     public Sphere pos;
-    public int damage;
-    public int knockback;
-    public int hitstun;
-    public int sourcePlayer;
-    public List<int> damagedPlayers;
-    public Move sourceMove;
+    public int damage = 0;
+    public int knockback = 0;
+    public int hitstun = 0;
+    public Combatent sourcePlayer = null;
+    public List<Combatent> damagedPlayers = null;
+    public Move sourceMove = null;
 };
 
 public class Move
 {
-    public Combatent owner;
-    public int duration;
+    public Combatent owner = null;
+    public int duration = 0;
     public int currentFrame = 0;
 
     public virtual void Step(CombatManager mgr)
@@ -59,8 +59,9 @@ public class Move
         }
     }
 
-    public virtual bool Trigger(CombatManager mgr)
+    public virtual void Trigger(CombatManager mgr)
     {
-        return false;
+        currentFrame = 0;
+        mgr.moves.Add(this);
     }
 }

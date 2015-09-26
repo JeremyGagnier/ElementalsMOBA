@@ -5,15 +5,6 @@ using System.Collections.Generic;
 public class PhysPlayer : PhysicsMover {
 
     public FInt feetPos;
-    public float feetPos_e;
-
-	new void Start ()
-    {
-        base.Start();
-        feetPos = new FInt(feetPos_e);
-        position = new FVector(new FInt(transform.position.x), new FInt(transform.position.y));
-        transform.position = new Vector3(position.x.ToFloat(), position.y.ToFloat(), 0);
-	}
 
     public override FVector ApplyInput(FVector vel)
     {

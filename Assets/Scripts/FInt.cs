@@ -199,11 +199,27 @@ public class FInt
 
     public static bool operator ==(FInt x, FInt y)
     {
+        if (object.ReferenceEquals(null, x) && object.ReferenceEquals(null, y))
+        {
+            return true;
+        }
+        else if (object.ReferenceEquals(null, x) || object.ReferenceEquals(null, y))
+        {
+            return false;
+        }
         return x.rawValue == y.rawValue;
     }
 
     public static bool operator !=(FInt x, FInt y)
     {
+        if (object.ReferenceEquals(null, x) && object.ReferenceEquals(null, y))
+        {
+            return false;
+        }
+        else if (object.ReferenceEquals(null, x) || object.ReferenceEquals(null, y))
+        {
+            return true;
+        }
         return x.rawValue != y.rawValue;
     }
 

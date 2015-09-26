@@ -5,6 +5,7 @@ using System.Collections.Generic;
 public class PhysicsManager : MonoBehaviour {
 
     public static FInt timestep = new FInt(0.01666f);
+    public static bool DEBUG = false;
 
     public World world;
 
@@ -106,6 +107,7 @@ public class PhysicsManager : MonoBehaviour {
                     List<Tuple> reCollide = CheckMoverCollision(mover, true);
                     if (reCollide.Count != 0)
                     {
+                        Log("x re-collide");
                         mover.CollideWithBlocks(true, reCollide);
                         if (mover.velocity.x.rawValue == 0)
                         {
@@ -117,6 +119,7 @@ public class PhysicsManager : MonoBehaviour {
                         // If we're not going to collide with anything then update the position up to the
                         // next possible collision.
                         xTime = FInt.One() / mover.velocity.x.Abs();
+                        Log("x force moved");
                     }
                 }
 
@@ -137,6 +140,7 @@ public class PhysicsManager : MonoBehaviour {
                     List<Tuple> reCollide = CheckMoverCollision(mover, false);
                     if (reCollide.Count != 0)
                     {
+                        Log("y re-collide");
                         mover.CollideWithBlocks(false, reCollide);
                         if (mover.velocity.y.rawValue == 0)
                         {
@@ -146,6 +150,7 @@ public class PhysicsManager : MonoBehaviour {
                     else
                     {
                         yTime = FInt.One() / mover.velocity.y.Abs();
+                        Log("y force moved");
                     }
                 }
 
@@ -164,7 +169,7 @@ public class PhysicsManager : MonoBehaviour {
 
             if (minTimestep.rawValue <= 0)
             {
-                Debug.LogWarning("Stepped by " + minTimestep.rawValue.ToString() + ", exiting while loop!!!");
+                LogWarning("Stepped by " + minTimestep.rawValue.ToString() + ", exiting while loop!!!");
                 break;
             }
 
@@ -202,9 +207,9 @@ public class PhysicsManager : MonoBehaviour {
         foreach (PhysBox pos in mover.hitbox)
         {
             int xMin = (mover.position.x + pos.x).ToInt() - 1;
-            int xMax = (mover.position.x + pos.x + pos.w + FInt.RawFInt(1)).ToInt() + 1;
+            int xMax = (mover.position.x + pos.x + pos.w).ToInt() + 1;
             int yMin = (mover.position.y + pos.y).ToInt() - 1;
-            int yMax = (mover.position.y + pos.y + pos.h + FInt.RawFInt(1)).ToInt() + 1;
+            int yMax = (mover.position.y + pos.y + pos.h).ToInt() + 1;
 
             if (xIsMin)
             {
@@ -250,4 +255,21 @@ public class PhysicsManager : MonoBehaviour {
         return false;
     }
 
+    public static void Log(string message)
+    {
+        if (DEBUG)
+        {
+            Debug.Log("PhysicsManager: " + message);
+        }
+    }
+
+    public static void LogWarning(string message)
+    {
+        Debug.LogWarning("PhysicsManager: " + message);
+    }
+
+    public static void LogError(string message)
+    {
+        Debug.LogError("PhysicsManager: " + message);
+    }
 }

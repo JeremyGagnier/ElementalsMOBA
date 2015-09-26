@@ -29,7 +29,13 @@ public class Game : MonoBehaviour
     {
         GameObject player = Instantiate(elemental);
         world.localPlayer = player;
-        physics.AddMover(player.GetComponent<PhysPlayer>());
+        PhysPlayer mover = player.GetComponent<PhysPlayer>();
+        physics.AddMover(mover);
+        Combatent combatent = player.GetComponent<Combatent>();
+        combat.AddCombatent(combatent);
+        combatent.phys = (PhysicsMover)mover;
+        combatent.manager = combat;
+
     }
 
 	void FixedUpdate()

@@ -45,6 +45,7 @@ public class Game : MonoBehaviour
         // However moves are dependant on position and position and motion are dependant on moves.
         // For example a move will put a hitboxes relative to the players position and will periodically
         // change the location of the character as well as change where the hurtboxes are from animations.
+        InputManager.Advance(1);
         physics.Advance(1);
         combat.Advance(1);
         frame += 1;

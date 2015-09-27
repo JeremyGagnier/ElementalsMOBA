@@ -54,8 +54,8 @@ public class PhysPlayer : PhysicsMover {
             }
         }
 
-        bool jump = Input.GetButton("Jump");
-        if (grounded && jump)
+        bool jump = InputManager.jumpPressed;
+        if (grounded && InputManager.jumpJustPressed)
         {
             grounded = false;
             jumping = true;
@@ -90,8 +90,8 @@ public class PhysPlayer : PhysicsMover {
         if (xIsMin)
         {
             bool climb = false;
-            float xInput = Input.GetAxis("Horizontal");
-            if (xInput * velocity.x.ToFloat() > 0)
+            if ((InputManager.forwardPressed && velocity.x > FInt.Zero()) ||
+                (InputManager.backwardPressed && velocity.x < FInt.Zero()))
             {
                 if (blocks.Count != 0)
                 {

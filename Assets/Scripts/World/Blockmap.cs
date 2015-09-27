@@ -127,7 +127,7 @@ public class Blockmap : MonoBehaviour
 				int truepy = py + chunkPosY*numBlocksHigh;
 				if (truepy < stone)
 				{
-					if (Noise(truepx, truepy*2, 16, 14, 1) > 10)
+					if (Noise(truepx, truepy*2, 16, 14, 1) > 5)
 					{
 						blocks[px, py] = 0;
 					}

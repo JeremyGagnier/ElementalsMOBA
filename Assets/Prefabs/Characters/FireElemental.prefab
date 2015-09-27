@@ -123,29 +123,29 @@ MonoBehaviour:
   - x:
       rawValue: -58982
     y:
-      rawValue: -91750
+      rawValue: -95750
     w:
       rawValue: 117964
     h:
-      rawValue: 183500
+      rawValue: 193500
   mass:
     rawValue: 589824
   runSpeed:
-    rawValue: 0
+    rawValue: 983040
   verticalAirSpeed:
     rawValue: 0
   horizontalAirSpeed:
-    rawValue: 0
+    rawValue: 983040
   fallSpeed:
-    rawValue: 0
+    rawValue: 9830400
   fallAccel:
-    rawValue: 0
+    rawValue: 3276800
   jumpSpeed:
-    rawValue: 0
+    rawValue: 1310720
   jumpDuration:
-    rawValue: 0
+    rawValue: 13107
   jumpEndSpeed:
-    rawValue: 0
+    rawValue: 655360
   currentJumpDuration:
     rawValue: 0
   allowInput: 1
@@ -213,7 +213,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 21300000, guid: db625f53a803d064f8e6c34446f1303e, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 4403bdd02459e7f48b67f7fbb96c1571, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1001 &100100000
 Prefab:

@@ -18,12 +18,13 @@ public struct Tuple
 
 public class World : MonoBehaviour
 {
-	public const int MAX_LOADED_CHUNKS = 50;
+    public const int MAX_LOADED_CHUNKS = 50;
+    public static bool DEBUG = false;
 
-	public int blockWidth = 50;
-	public int blockHeight = 50;
-	public int chunkWidth = 1;
-    public int chunkHeight = 1;
+	public int blockWidth;
+	public int blockHeight;
+	public int chunkWidth;
+    public int chunkHeight;
     public GameObject blockmapPrefab;
     public GameObject lightmapPrefab;
     public GameObject backmapPrefab;
@@ -31,24 +32,26 @@ public class World : MonoBehaviour
 	public Dictionary<Tuple, GameObject> generatedBlockmaps = new Dictionary<Tuple, GameObject>();
     public Dictionary<Tuple, GameObject> generatedLightmaps = new Dictionary<Tuple, GameObject>();
     public Dictionary<Tuple, GameObject> generatedBackmaps = new Dictionary<Tuple, GameObject>();
+    public Dictionary<Tuple, Dictionary<Tuple, int>> damage;
     public List<Tuple> generationOrder = new List<Tuple>();
 	public GameObject localPlayer;
 	private int playerCX = -1;
 	private int playerCY = -1;
 
-    private byte[,] emptyChunk;
+    private byte[,] fullChunk;
+    private HashSet<Tuple> emptyHashSet = new HashSet<Tuple>();
 
 	private long lightingPassesDone = 0;
 	private long lightingTimeTaken = 0;
     
 	void Start ()
 	{
-        emptyChunk = new byte[blockWidth, blockHeight];
+        fullChunk = new byte[blockWidth, blockHeight];
         for (int x = 0; x < blockWidth; ++x)
         {
             for (int y = 0; y < blockHeight; ++y)
             {
-                emptyChunk[x, y] = 0;
+                fullChunk[x, y] = 1;
             }
         }
 		//localPlayer.transform.position = new Vector3(blockWidth * chunkWidth / 2, (blockHeight + 10) * chunkHeight / 2);
@@ -56,7 +59,7 @@ public class World : MonoBehaviour
 
 	void Update ()
 	{
-		int pcx = (int)(localPlayer.transform.position.x) / blockWidth;
+		int pcx = (int)localPlayer.transform.position.x / blockWidth;
 		int pcy = (int)localPlayer.transform.position.y / blockHeight;
 
 		if (pcx != playerCX || pcy != playerCY)
@@ -95,7 +98,7 @@ public class World : MonoBehaviour
 				}
 			}
 
-			// Create meshes and collision meshes in a 3x3 box around your character
+			// Create meshes in a 3x3 box around your character
 			for (int x = pcx - 1; x < pcx + 2; ++x)
 			{
 				for (int y = pcy - 1; y < pcy + 2; ++y)
@@ -140,8 +143,8 @@ public class World : MonoBehaviour
 				}
 			}
 		}
-		if (Input.GetMouseButtonDown (1))
-		{
+		if (Input.GetMouseButtonDown(1))
+        {
 			Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
 			int blockHoverX = Mathf.RoundToInt(mousePos.x - 0.5f);
 			int blockHoverY = Mathf.RoundToInt(mousePos.y - 0.5f);
@@ -174,7 +177,7 @@ public class World : MonoBehaviour
     {
         if (cx < 0 || cx >= chunkWidth || cy < 0 || cy >= chunkHeight)
         {
-            return emptyChunk;
+            return fullChunk;
         }
         return generatedBlockmaps[new Tuple(cx, cy)].GetComponent<Blockmap>().blocks;
     }
@@ -197,15 +200,67 @@ public class World : MonoBehaviour
     {
         if (cx < 0 || cx >= chunkWidth || cy < 0 || cy >= chunkHeight)
         {
-            return emptyChunk;
+            return fullChunk;
         }
         return generatedBackmaps[new Tuple(cx, cy)].GetComponent<Backmap>().bgBlocks;
+    }
+
+    public HashSet<Tuple> LightSourceAt(int cx, int cy)
+    {
+        if (cx < 0 || cx >= chunkWidth || cy < 0 || cy >= chunkHeight)
+        {
+            return emptyHashSet;
+        }
+        return generatedLightmaps[new Tuple(cx, cy)].GetComponent<Lightmap>().lightSources;
+    }
+
+    public void DamageBlock(int x, int y, int dmg)
+    {
+        Tuple c = new Tuple(x / blockWidth, y / blockHeight);
+        Tuple b = new Tuple(x % blockWidth, y % blockHeight);
+
+        if (damage.ContainsKey(c))
+        {
+            if (damage[c].ContainsKey(b))
+            {
+                damage[c][b] -= dmg;
+                // TODO: Do something if block is destroyed
+            }
+            else
+            {
+                // TODO: Implement different health for different block types
+                damage[c].Add(b, 100 - dmg);
+            }
+        }
+        else
+        {
+            damage.Add(c, new Dictionary<Tuple, int>());
+            damage[c].Add(b, 100 - dmg);
+        }
     }
 
 	public void RecordLightingTime(long time)
 	{
 		lightingTimeTaken += time;
 		lightingPassesDone += 1;
-		//Debug.Log ("LIGHTING: Last: " +(((float)time) / 1000f).ToString("n3") + ", Average: " + ((float)(lightingTimeTaken / lightingPassesDone) / 1000f).ToString("n3"));
+		Log("Lighting: Last: " +(((float)time) / 1000f).ToString("n3") + ", Average: " + ((float)(lightingTimeTaken / lightingPassesDone) / 1000f).ToString("n3"));
 	}
+
+    public void HackRelight(int cx, int cy)
+    {
+        Tuple pos = new Tuple(cx, cy);
+
+        Lightmap lmap = generatedLightmaps[pos].GetComponent<Lightmap>();
+        Blockmap bmap = generatedBlockmaps[pos].GetComponent<Blockmap>();
+        Backmap bkmap = generatedBackmaps[pos].GetComponent<Backmap>();
+        lmap.Activate(bmap, bkmap);
+    }
+
+    public static void Log(string message)
+    {
+        if (DEBUG)
+        {
+            Debug.Log("World: " + message);
+        }
+    }
 }

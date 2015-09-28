@@ -212,11 +212,13 @@ public class Blockmap : MonoBehaviour
 		return blocks[x,y];
 	}
 
-	public int DestroyBlock (int bx, int by)
-	{
-		int oldBlock = blocks[bx, by];
-		blocks[bx, by] = 0;
+    public int DestroyBlock(int bx, int by)
+    {
+        int oldBlock = blocks[bx, by];
+        blocks[bx, by] = 0;
 
-		return oldBlock;
-	}
+        world.HackRelight(chunkPosX, chunkPosY);
+
+        return oldBlock;
+    }
 }

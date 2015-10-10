@@ -11,19 +11,10 @@ public class PhysicsManager : MonoBehaviour {
 
     List<PhysicsMover> movers = new List<PhysicsMover>();
 
-	// Use this for initialization
-	void Start ()
-    {
-        movers = new List<PhysicsMover>(FindObjectsOfType<PhysicsMover>());
-        foreach (PhysicsMover mover in movers)
-        {
-            mover.pManager = this;
-        }
-	}
-
     public void AddMover(PhysicsMover mover)
     {
         movers.Add(mover);
+        mover.pManager = this;
     }
 
     public void Advance(int frames)
@@ -32,8 +23,25 @@ public class PhysicsManager : MonoBehaviour {
         {
             if (Game.frame > 10)         // Don't do anything until the game scene is loaded
             {
+                /*
                 foreach (PhysicsMover mover in movers)
                 {
+                    // This is obviously a hack, fix/remove this.
+                    world.LightSourceAt(mover.position.x.ToInt() / world.chunkWidth,
+                                        mover.position.y.ToInt() / world.chunkHeight).Clear();
+                }*/
+                foreach (PhysicsMover mover in movers)
+                {
+                    // This is obviously a hack, fix/remove this.
+                    HashSet<Tuple> sources = world.LightSourceAt(mover.position.x.ToInt() / world.blockWidth,
+                                                                 mover.position.y.ToInt() / world.blockHeight);
+                    if (sources != null)
+                    {
+                        sources.Add(new Tuple(mover.position.x.ToInt() % world.blockWidth,
+                                              mover.position.y.ToInt() % world.blockHeight));
+                    }
+                    //Debug.LogError((mover.position.x.ToInt() / world.blockWidth).ToString() + ", " +
+                    //               (mover.position.y.ToInt() / world.blockHeight).ToString() + " : ");
                     MoveMover(mover);
                 }
             }
@@ -94,7 +102,7 @@ public class PhysicsManager : MonoBehaviour {
                 }
                 else if (mover.velocity.x > FInt.Zero())
                 {
-                    int maxX = (mover.position.x + pos.x + pos.w - FInt.RawFInt(1)).ToInt() + 1;
+                    int maxX = (mover.position.x + pos.x + pos.w).ToInt() + 1;
                     FInt maxOffX = new FInt(maxX) - (mover.position.x + pos.x + pos.w);
                     xTime = maxOffX / mover.velocity.x;
                 }
@@ -131,7 +139,7 @@ public class PhysicsManager : MonoBehaviour {
                 }
                 else if (mover.velocity.y > FInt.Zero())
                 {
-                    int maxY = (mover.position.y + pos.y + pos.h - FInt.RawFInt(1)).ToInt() + 1;
+                    int maxY = (mover.position.y + pos.y + pos.h).ToInt() + 1;
                     FInt maxOffY = new FInt(maxY) - (mover.position.y + pos.y + pos.h);
                     yTime = maxOffY / mover.velocity.y;
                 }
@@ -185,6 +193,10 @@ public class PhysicsManager : MonoBehaviour {
             if (blocksHit.Count != 0)
             {
                 mover.CollideWithBlocks(xIsMin, blocksHit);
+            }
+            else
+            {
+                mover.EnterNewBlock(xIsMin);
             }
 
             if (mover.velocity.x.rawValue == 0 &&

@@ -169,46 +169,7 @@ public class Backmap : MonoBehaviour
 		}
 	}
 
-	byte Block (int x, int y)
-	{
-		int cx = chunkPosX;
-		int cy = chunkPosY;
-		int bx = x;
-		int by = y;
-		bool changed = false;
-		if (x == -1)
-		{
-			cx -= 1;
-			bx = numBlocksWide - 1;
-			changed = true;
-		}
-		if (x == numBlocksWide)
-		{
-			cx += 1;
-			bx = 0;
-			changed = true;
-		}
-		if (y == -1)
-		{
-			cy -= 1;
-			by = numBlocksHigh - 1;
-			changed = true;
-		}
-		if (y == numBlocksHigh)
-		{
-			cy += 1;
-			by = 0;
-			changed = true;
-		}
-		
-		if(changed)
-		{
-			return world.BlockAt (cx, cy, bx, by);
-		}
-		return bgBlocks[x,y];
-	}
-
-	public int DestroyBlock (int bx, int by)
+	public int DestroyBack (int bx, int by)
 	{
 		int oldBlock = bgBlocks[bx, by];
 		bgBlocks[bx, by] = 0;

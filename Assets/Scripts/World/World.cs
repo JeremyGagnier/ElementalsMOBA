@@ -54,7 +54,6 @@ public class World : MonoBehaviour
                 fullChunk[x, y] = 1;
             }
         }
-		//localPlayer.transform.position = new Vector3(blockWidth * chunkWidth / 2, (blockHeight + 10) * chunkHeight / 2);
 	}
 
 	void Update ()
@@ -211,7 +210,12 @@ public class World : MonoBehaviour
         {
             return emptyHashSet;
         }
-        return generatedLightmaps[new Tuple(cx, cy)].GetComponent<Lightmap>().lightSources;
+        Tuple pos = new Tuple(cx, cy);
+        if (generatedLightmaps.ContainsKey(pos))
+        {
+            return generatedLightmaps[pos].GetComponent<Lightmap>().lightSources;
+        }
+        return null;
     }
 
     public void DamageBlock(int x, int y, int dmg)

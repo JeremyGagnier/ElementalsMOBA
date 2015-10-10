@@ -56,6 +56,23 @@ public class PhysicsMover : MonoBehaviour {
     public FVector position = new FVector(FInt.Zero(), FInt.Zero());
     public FVector velocity = new FVector(FInt.Zero(), FInt.Zero());
 
+    public Tuple chunkPos
+    {
+        get
+        {
+            return new Tuple(position.x.ToInt() / pManager.world.blockWidth,
+                             position.y.ToInt() / pManager.world.blockHeight);
+        }
+    }
+    public Tuple blockPos
+    {
+        get
+        {
+            return new Tuple(position.x.ToInt() % pManager.world.blockWidth,
+                             position.y.ToInt() % pManager.world.blockHeight);
+        }
+    }
+
     public PhysicsManager pManager;
 
     void OnDrawGizmos()
@@ -106,6 +123,10 @@ public class PhysicsMover : MonoBehaviour {
     }
 
     public virtual void CollideWithBlocks(bool xIsMin, List<Tuple> blocks)
+    {
+    }
+
+    public virtual void EnterNewBlock(bool xIsMin)
     {
     }
 

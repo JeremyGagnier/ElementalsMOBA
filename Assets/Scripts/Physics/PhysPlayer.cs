@@ -5,9 +5,12 @@ using System.Collections.Generic;
 public class PhysPlayer : PhysicsMover {
 
     public FInt feetPos;
+    public Tuple lastChunkPos;
+    public Tuple lastBlockPos;
 
     public override FVector ApplyInput(FVector vel)
     {
+        // Determine velocity changes based on input (DI and walking/running)
         float xInput = Input.GetAxis("Horizontal");
         if (grounded)
         {
@@ -53,7 +56,8 @@ public class PhysPlayer : PhysicsMover {
                 }
             }
         }
-
+        
+        // Handle jumping (change this to a move instead)
         bool jump = InputManager.jumpPressed;
         if (grounded && InputManager.jumpJustPressed)
         {
@@ -81,6 +85,25 @@ public class PhysPlayer : PhysicsMover {
             vel.y = new FInt(jumpEndSpeed);
         }
 
+        // Check to change light source
+        if (lastChunkPos.x != chunkPos.x || lastChunkPos.y != chunkPos.y ||
+            lastBlockPos.x != blockPos.x || lastBlockPos.y != blockPos.y)
+        {
+            HashSet<Tuple> lastLights = pManager.world.LightSourceAt(lastChunkPos.x, lastChunkPos.y);
+            if (lastLights != null)
+            {
+                lastLights.Remove(lastBlockPos);
+                pManager.world.HackRelight(lastChunkPos.x, lastChunkPos.y);
+            }
+            HashSet<Tuple> lights = pManager.world.LightSourceAt(chunkPos.x, chunkPos.y);
+            if (lights != null)
+            {
+                lights.Add(blockPos);
+                pManager.world.HackRelight(chunkPos.x, chunkPos.y);
+            }
+            lastChunkPos = chunkPos;
+            lastBlockPos = blockPos;
+        }
 
         return vel;
     }
@@ -89,6 +112,7 @@ public class PhysPlayer : PhysicsMover {
     {
         if (xIsMin)
         {
+            // Check if we should move the player up one block (climbing)
             bool climb = false;
             if ((InputManager.forwardPressed && velocity.x > FInt.Zero()) ||
                 (InputManager.backwardPressed && velocity.x < FInt.Zero()))
@@ -113,12 +137,16 @@ public class PhysPlayer : PhysicsMover {
                     }
                     FInt boxY = smallestBox + position.y;
                     FInt blockY = new FInt(highestBlock);
-                    if (blockY < boxY + FInt.One())
+
+                    FInt vTemp = velocity.y;    // Force the velocity positive so that check mover collision works
+                    velocity.y = new FInt(1);
+                    if (blockY < boxY + FInt.One() && pManager.CheckMoverCollision(this, false).Count == 0)
                     {
                         position.y += FInt.One();
                         position.y -= FInt.RawFInt((position.y + FInt.RawFInt(feetPos.FractionalBits())).FractionalBits());
                         climb = true;
                     }
+                    velocity.y = vTemp;
                 }
             }
             if (!climb)

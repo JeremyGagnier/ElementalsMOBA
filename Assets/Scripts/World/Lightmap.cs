@@ -37,9 +37,9 @@ public class Lightmap : MonoBehaviour
 
     private Thread lightThread;
 
-	public void Setup (World world, int bWidth, int bHeight, int cx, int cy)
+	public void Setup(World world, int bWidth, int bHeight, int cx, int cy)
 	{
-		this.mesh = GetComponent<MeshFilter> ().mesh;
+		this.mesh = GetComponent<MeshFilter>().mesh;
 
 		this.world = world;
 		this.numBlocksWide = bWidth;
@@ -53,12 +53,13 @@ public class Lightmap : MonoBehaviour
     {
         if (update)
         {
-            UpdateMesh();
             update = false;
+            BuildMesh();
+            UpdateMesh();
         }
     }
 
-	public void Activate (Blockmap bmap, Backmap bkmap)
+	public void Activate(Blockmap bmap, Backmap bkmap)
     {
         isActive = true;
 
@@ -90,46 +91,42 @@ public class Lightmap : MonoBehaviour
         light[1] = world.LightSourceAt(chunkPosX    , chunkPosY - 1);
         light[2] = world.LightSourceAt(chunkPosX + 1, chunkPosY - 1);
         light[3] = world.LightSourceAt(chunkPosX - 1, chunkPosY    );
-        light[4] = world.LightSourceAt(chunkPosX    , chunkPosY    );
+        light[4] = this.lightSources;
         light[5] = world.LightSourceAt(chunkPosX + 1, chunkPosY    );
         light[6] = world.LightSourceAt(chunkPosX - 1, chunkPosY + 1);
         light[7] = world.LightSourceAt(chunkPosX    , chunkPosY + 1);
         light[8] = world.LightSourceAt(chunkPosX + 1, chunkPosY + 1);
         data["light"] = light;
-        
+
+        /*
         lightThread = new Thread((bInfo) =>
         {
             CalculateLight(bInfo);
-            BuildMesh();
             bmap.Activate(brightness);
             bkmap.Activate(brightness, bmap.blocks);
-            update = true;
         });
         lightThread.Start(data);
-        
-        /*
+        */
+
         CalculateLight(data);
-        BuildMesh();
         bmap.Activate(brightness);
         bkmap.Activate(brightness, bmap.blocks);
-        update = true;
-         */
     }
 
-	void UpdateMesh ()
-	{
-		mesh.Clear ();
-		mesh.vertices = newVertices.ToArray();
-		mesh.triangles = newTriangles.ToArray();
-		mesh.uv = newUV.ToArray();
-		mesh.Optimize ();
-		mesh.RecalculateNormals ();
-
-		squareCount = 0;
-		newVertices.Clear ();
-		newTriangles.Clear ();
-		newUV.Clear ();
-	}
+    void BuildMesh()
+    {
+        for (int px = 0; px < numBlocksWide; px++)
+        {
+            for (int py = 0; py < numBlocksHigh; py++)
+            {
+                int lightLevel = 255 - (int)brightness[px, py];
+                if (lightLevel != 0)
+                {
+                    GenSquare(px, py, new Vector2((float)lightLevel, 0));
+                }
+            }
+        }
+    }
 
 	void GenSquare(int x, int y, Vector2 texture)
 	{
@@ -153,6 +150,21 @@ public class Lightmap : MonoBehaviour
         newUV.Add(new Vector2(texture.x / tTexDim + 1 / tPixDim + tUnit, texture.y / tTexDim + 1 / tPixDim));
 	}
 
+    void UpdateMesh()
+    {
+        mesh.Clear();
+        mesh.vertices = newVertices.ToArray();
+        mesh.triangles = newTriangles.ToArray();
+        mesh.uv = newUV.ToArray();
+        mesh.Optimize();
+        mesh.RecalculateNormals();
+
+        squareCount = 0;
+        newVertices.Clear();
+        newTriangles.Clear();
+        newUV.Clear();
+    }
+
 	void CalculateLight(object data)
 	{
         brightness = new byte[numBlocksWide + 2 * ITERATIONS + 2, numBlocksHigh + 2 * ITERATIONS + 2];
@@ -161,6 +173,7 @@ public class Lightmap : MonoBehaviour
         byte[][][,] blockData = new byte[2][][,];
         blockData[0] = (byte[][,])info["block"];
         blockData[1] = (byte[][,])info["back"];
+        HashSet<Tuple>[] lightData = (HashSet<Tuple>[])info["light"];
 
         byte[,] blocks = new byte[numBlocksWide + 2 * ITERATIONS + 2, numBlocksHigh + 2 * ITERATIONS + 2];
         byte[,] bgBlocks = new byte[numBlocksWide + 2 * ITERATIONS + 2, numBlocksHigh + 2 * ITERATIONS + 2];
@@ -378,19 +391,22 @@ public class Lightmap : MonoBehaviour
 		}
 
         // Go through light sources
-        foreach (Tuple pos in lightSources)
+        foreach (HashSet<Tuple> chunkLight in lightData)
         {
-            int x = pos.x + ITERATIONS + 1;
-            int y = pos.y + ITERATIONS + 1;
-            brightness[x, y] = 255;
-            if (blocks[x - 1, y - 1] != 0 || bgBlocks[x - 1, y - 1] != 0) changed.Add(new Tuple(x - 1, y - 1));
-            if (blocks[x - 1, y    ] != 0 || bgBlocks[x - 1, y    ] != 0) changed.Add(new Tuple(x - 1, y    ));
-            if (blocks[x - 1, y + 1] != 0 || bgBlocks[x - 1, y + 1] != 0) changed.Add(new Tuple(x - 1, y + 1));
-            if (blocks[x    , y - 1] != 0 || bgBlocks[x    , y - 1] != 0) changed.Add(new Tuple(x    , y - 1));
-            if (blocks[x    , y + 1] != 0 || bgBlocks[x    , y + 1] != 0) changed.Add(new Tuple(x    , y + 1));
-            if (blocks[x + 1, y - 1] != 0 || bgBlocks[x + 1, y - 1] != 0) changed.Add(new Tuple(x + 1, y - 1));
-            if (blocks[x + 1, y    ] != 0 || bgBlocks[x + 1, y    ] != 0) changed.Add(new Tuple(x + 1, y    ));
-            if (blocks[x + 1, y + 1] != 0 || bgBlocks[x + 1, y + 1] != 0) changed.Add(new Tuple(x + 1, y + 1));
+            foreach (Tuple pos in chunkLight)
+            {
+                int x = pos.x + ITERATIONS + 1;
+                int y = pos.y + ITERATIONS + 1;
+                brightness[x, y] = 255;
+                if (blocks[x - 1, y - 1] != 0 || bgBlocks[x - 1, y - 1] != 0) changed.Add(new Tuple(x - 1, y - 1));
+                if (blocks[x - 1, y    ] != 0 || bgBlocks[x - 1, y    ] != 0) changed.Add(new Tuple(x - 1, y    ));
+                if (blocks[x - 1, y + 1] != 0 || bgBlocks[x - 1, y + 1] != 0) changed.Add(new Tuple(x - 1, y + 1));
+                if (blocks[x    , y - 1] != 0 || bgBlocks[x    , y - 1] != 0) changed.Add(new Tuple(x    , y - 1));
+                if (blocks[x    , y + 1] != 0 || bgBlocks[x    , y + 1] != 0) changed.Add(new Tuple(x    , y + 1));
+                if (blocks[x + 1, y - 1] != 0 || bgBlocks[x + 1, y - 1] != 0) changed.Add(new Tuple(x + 1, y - 1));
+                if (blocks[x + 1, y    ] != 0 || bgBlocks[x + 1, y    ] != 0) changed.Add(new Tuple(x + 1, y    ));
+                if (blocks[x + 1, y + 1] != 0 || bgBlocks[x + 1, y + 1] != 0) changed.Add(new Tuple(x + 1, y + 1));
+            }
         }
 
 		byte[,] oldBrightness = brightness;
@@ -486,59 +502,5 @@ public class Lightmap : MonoBehaviour
 				brightness[x, y] = oldBrightness[x + ITERATIONS + 1, y + ITERATIONS + 1];
 			}
 		}
-	}
-
-    void BuildMesh()
-	{
-		for(int px = 0; px < numBlocksWide; px++)
-		{
-			for(int py = 0; py < numBlocksHigh; py++)
-			{
-				int lightLevel = 255 - (int)brightness[px, py];
-                if (lightLevel != 0)
-                {
-					GenSquare(px, py, new Vector2((float)lightLevel, 0));
-                }
-			}
-		}
-	}
-
-	byte Block (int x, int y)
-	{
-		int cx = chunkPosX;
-		int cy = chunkPosY;
-		int bx = x;
-		int by = y;
-		bool changed = false;
-		if (x == -1)
-		{
-			cx -= 1;
-			bx = numBlocksWide - 1;
-			changed = true;
-		}
-		if (x == numBlocksWide)
-		{
-			cx += 1;
-			bx = 0;
-			changed = true;
-		}
-		if (y == -1)
-		{
-			cy -= 1;
-			by = numBlocksHigh - 1;
-			changed = true;
-		}
-		if (y == numBlocksHigh)
-		{
-			cy += 1;
-			by = 0;
-			changed = true;
-		}
-		
-		if(changed)
-		{
-			return world.BlockAt (cx, cy, bx, by);
-		}
-		return brightness[x,y];
 	}
 }

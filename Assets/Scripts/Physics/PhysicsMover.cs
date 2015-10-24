@@ -60,16 +60,16 @@ public class PhysicsMover : MonoBehaviour {
     {
         get
         {
-            return new Tuple(position.x.ToInt() / pManager.world.blockWidth,
-                             position.y.ToInt() / pManager.world.blockHeight);
+            return new Tuple(position.x.ToInt() / pManager.world.numBlocksWide,
+                             position.y.ToInt() / pManager.world.numBlocksHigh);
         }
     }
     public Tuple blockPos
     {
         get
         {
-            return new Tuple(position.x.ToInt() % pManager.world.blockWidth,
-                             position.y.ToInt() % pManager.world.blockHeight);
+            return new Tuple(position.x.ToInt() % pManager.world.numBlocksWide,
+                             position.y.ToInt() % pManager.world.numBlocksHigh);
         }
     }
 

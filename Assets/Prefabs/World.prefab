@@ -39,10 +39,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a880454bbe4e17a47bdb2571e0ab1b1e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  blockWidth: 50
-  blockHeight: 40
-  chunkWidth: 30
-  chunkHeight: 10
+  numBlocksWide: 50
+  numBlocksHigh: 40
+  numChunksWide: 30
+  numChunksHigh: 10
   blockmapPrefab: {fileID: 186912, guid: 21681c11d6feee740a12a309070132f2, type: 2}
   lightmapPrefab: {fileID: 186912, guid: 6549a5e82a3dccb4d96cb9bd8746abde, type: 2}
   backmapPrefab: {fileID: 186912, guid: f562e23aab6cdca41812607cfb5b53b1, type: 2}

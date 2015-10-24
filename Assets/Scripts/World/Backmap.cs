@@ -26,8 +26,9 @@ public class Backmap : MonoBehaviour
 	public List<Vector2> newUV = new List<Vector2>();
 
 	private Mesh mesh;
-	
-	private int squareCount;
+
+    private int squareCount;
+    private Dictionary<Tuple, int> squares = new Dictionary<Tuple, int>();
 
     public bool update = false;
 	public bool isActive = false;
@@ -46,9 +47,10 @@ public class Backmap : MonoBehaviour
 		this.GenTerrain ();
 	}
 
-	public void Activate (byte[,] brightness, byte[,] blockmap)
+	public void Activate (float[,] brightness, byte[,] blockmap)
     {
         isActive = true;
+        ClearMeshInfo();
         BuildMesh(brightness, blockmap);
         update = true;
 	}
@@ -70,14 +72,18 @@ public class Backmap : MonoBehaviour
 		mesh.uv = newUV.ToArray();
 		mesh.Optimize ();
 		mesh.RecalculateNormals ();
-
-		squareCount = 0;
-		newVertices.Clear ();
-		newTriangles.Clear ();
-		newUV.Clear ();
 	}
 
-	void GenSquare(int x, int y, Vector2 texture)
+    void ClearMeshInfo()
+    {
+        squareCount = 0;
+        squares.Clear();
+        newVertices.Clear();
+        newTriangles.Clear();
+        newUV.Clear();
+    }
+
+	void GenSquare(int x, int y)
 	{
         newVertices.Add(new Vector3(x, y, 0));
         newVertices.Add(new Vector3(x, y + 1, 0));
@@ -91,8 +97,10 @@ public class Backmap : MonoBehaviour
         newTriangles.Add((squareCount * 4) + 2);
         newTriangles.Add((squareCount * 4) + 3);
 
-        squareCount++;
+        squares.Add(new Tuple(x, y), squareCount);
+        squareCount += 1;
 
+        Vector2 texture = GetTextureAt(x, y);
         newUV.Add(new Vector2(texture.x / tTexDim + 1 / tPixDim, texture.y / tTexDim + 1 / tPixDim));
         newUV.Add(new Vector2(texture.x / tTexDim + 1 / tPixDim, texture.y / tTexDim + 1 / tPixDim + tUnit));
         newUV.Add(new Vector2(texture.x / tTexDim + 1 / tPixDim + tUnit, texture.y / tTexDim + 1 / tPixDim + tUnit));
@@ -116,11 +124,11 @@ public class Backmap : MonoBehaviour
 			int stone = Noise(truepx, 0, 80, 15, 1);
 			stone += Noise (truepx, 0, 50, 30, 1);
 			stone += Noise (truepx, 0, 10, 10, 1);
-			stone += numBlocksHigh * world.chunkHeight / 2;
+			stone += numBlocksHigh * world.numChunksHigh / 2;
 
 			int dirt = Noise (truepx, 0, 100, 35, 1);
 			dirt += Noise (truepx, 0, 50, 30, 1);
-			dirt += numBlocksHigh * world.chunkHeight / 2;
+			dirt += numBlocksHigh * world.numChunksHigh / 2;
 
 			for(int py = 0; py < numBlocksHigh; py++)
 			{
@@ -144,26 +152,15 @@ public class Backmap : MonoBehaviour
 		}
 	}
 
-	void BuildMesh (byte[,] brightness, byte[,] blockmap)
+	void BuildMesh (float[,] brightness, byte[,] blockmap)
 	{
 		for(int px = 0; px < numBlocksWide; px++)
 		{
 			for(int py = 0; py < numBlocksHigh; py++)
 			{
-				if(bgBlocks[px, py] != 0 && blockmap[px,py] == 0 && brightness[px, py] != 0)
+				if(bgBlocks[px, py] != 0 && blockmap[px,py] == 0 && brightness[px, py] != 0f)
 				{
-					if (bgBlocks[px, py] == 1)
-					{
-						GenSquare (px, py, tStone);
-					}
-					else if (bgBlocks[px,py] == 2)
-					{
-						GenSquare (px, py, tGrass);
-					}
-                    else if (bgBlocks[px, py] == 3)
-                    {
-                        GenSquare(px, py, tStoneWall);
-                    }
+                    GenSquare(px, py);
 				}
 			}
 		}
@@ -176,4 +173,44 @@ public class Backmap : MonoBehaviour
 
 		return oldBlock;
 	}
+
+
+    public Vector2 GetTextureAt(int x, int y)
+    {
+        if (bgBlocks[x, y] == 1)
+        {
+            return tStone;
+        }
+        else if (bgBlocks[x, y] == 2)
+        {
+            return tGrass;
+        }
+        else if (bgBlocks[x, y] == 3)
+        {
+            return tStoneWall;
+        }
+        return new Vector2();
+    }
+
+    public void Redraw(float light, byte block, int x, int y)
+    {
+        if (bgBlocks[x, y] != 0 && light != 0f && block == 0)
+        {
+            Tuple pos = new Tuple(x, y);
+            if (squares.ContainsKey(pos))
+            {
+                Vector2 texture = GetTextureAt(x, y);
+                newUV[squares[pos] * 4] = new Vector2(texture.x / tTexDim + 1 / tPixDim, texture.y / tTexDim + 1 / tPixDim);
+                newUV[squares[pos] * 4 + 1] = new Vector2(texture.x / tTexDim + 1 / tPixDim, texture.y / tTexDim + 1 / tPixDim + tUnit);
+                newUV[squares[pos] * 4 + 2] = new Vector2(texture.x / tTexDim + 1 / tPixDim + tUnit, texture.y / tTexDim + 1 / tPixDim + tUnit);
+                newUV[squares[pos] * 4 + 3] = new Vector2(texture.x / tTexDim + 1 / tPixDim + tUnit, texture.y / tTexDim + 1 / tPixDim);
+            }
+            else
+            {
+                GenSquare(x, y);
+            }
+        }
+        update = true;
+    }
+
 }

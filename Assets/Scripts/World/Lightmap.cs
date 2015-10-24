@@ -8,11 +8,12 @@ using System.Diagnostics;
 public class Lightmap : MonoBehaviour
 {
     public const int ITERATIONS = 16;
-    public const byte LIGHT_UNIT = 256 / ITERATIONS;
-    public const byte DIAGONAL_UNIT = (byte)((float)LIGHT_UNIT * 1.414f);
-    public const byte BLOCK_REDUCTION = 3;
+    public const float LIGHT_UNIT = 256f / ITERATIONS;
+    public const float DIAGONAL_UNIT = LIGHT_UNIT * 1.414f;
+    public const float BLOCK_REDUCTION = 3f;
 
-	public byte[,] brightness;
+    private object brightnessLock = new object();
+	public float[,] brightness;
     public HashSet<Tuple> lightSources = new HashSet<Tuple>();
 
 	private World world;
@@ -30,9 +31,11 @@ public class Lightmap : MonoBehaviour
 	public List<Vector2> newUV = new List<Vector2>();
 
 	private Mesh mesh;
-	private int squareCount;
+    private int squareCount;
+    private Dictionary<Tuple, int> squares = new Dictionary<Tuple, int>();
 
 	public bool isActive = false;
+    private bool activating = false;
     public bool update = false;
 
     private Thread lightThread;
@@ -51,17 +54,26 @@ public class Lightmap : MonoBehaviour
 
     void Update()
     {
+        // Right now this is causing the most lag in the game.
         if (update)
         {
-            update = false;
-            BuildMesh();
-            UpdateMesh();
+            lock (brightnessLock)
+            {
+                update = false;
+                UpdateMesh();
+            }
         }
     }
 
 	public void Activate(Blockmap bmap, Backmap bkmap)
     {
+        if (activating)
+        {
+            return;
+        }
+
         isActive = true;
+        activating = true;
 
         Dictionary<string, object> data = new Dictionary<string,object>();
         byte[][,] block = new byte[9][,];
@@ -87,30 +99,41 @@ public class Lightmap : MonoBehaviour
         back[8] = world.BackmapAt(chunkPosX + 1, chunkPosY + 1);
         data["back"] = back;
         HashSet<Tuple>[] light = new HashSet<Tuple>[9];
-        light[0] = world.LightSourceAt(chunkPosX - 1, chunkPosY - 1);
-        light[1] = world.LightSourceAt(chunkPosX    , chunkPosY - 1);
-        light[2] = world.LightSourceAt(chunkPosX + 1, chunkPosY - 1);
-        light[3] = world.LightSourceAt(chunkPosX - 1, chunkPosY    );
+        light[0] = world.LightSourcesAt(chunkPosX - 1, chunkPosY - 1);
+        light[1] = world.LightSourcesAt(chunkPosX    , chunkPosY - 1);
+        light[2] = world.LightSourcesAt(chunkPosX + 1, chunkPosY - 1);
+        light[3] = world.LightSourcesAt(chunkPosX - 1, chunkPosY    );
         light[4] = this.lightSources;
-        light[5] = world.LightSourceAt(chunkPosX + 1, chunkPosY    );
-        light[6] = world.LightSourceAt(chunkPosX - 1, chunkPosY + 1);
-        light[7] = world.LightSourceAt(chunkPosX    , chunkPosY + 1);
-        light[8] = world.LightSourceAt(chunkPosX + 1, chunkPosY + 1);
+        light[5] = world.LightSourcesAt(chunkPosX + 1, chunkPosY    );
+        light[6] = world.LightSourcesAt(chunkPosX - 1, chunkPosY + 1);
+        light[7] = world.LightSourcesAt(chunkPosX    , chunkPosY + 1);
+        light[8] = world.LightSourcesAt(chunkPosX + 1, chunkPosY + 1);
         data["light"] = light;
 
-        /*
         lightThread = new Thread((bInfo) =>
         {
-            CalculateLight(bInfo);
-            bmap.Activate(brightness);
-            bkmap.Activate(brightness, bmap.blocks);
+            lock (brightnessLock)
+            {
+                ClearMeshInfo();
+                CalculateLight(bInfo);
+                bmap.Activate(brightness);
+                bkmap.Activate(brightness, bmap.blocks);
+                BuildMesh();
+            }
+            update = true;
+            activating = false;
         });
         lightThread.Start(data);
-        */
 
+        /*
+        ClearMeshInfo();
         CalculateLight(data);
         bmap.Activate(brightness);
         bkmap.Activate(brightness, bmap.blocks);
+        BuildMesh();
+        update = true;
+        activating = false;
+         */
     }
 
     void BuildMesh()
@@ -119,16 +142,15 @@ public class Lightmap : MonoBehaviour
         {
             for (int py = 0; py < numBlocksHigh; py++)
             {
-                int lightLevel = 255 - (int)brightness[px, py];
-                if (lightLevel != 0)
+                if (brightness[px, py] != 255)
                 {
-                    GenSquare(px, py, new Vector2((float)lightLevel, 0));
+                    GenSquare(px, py);
                 }
             }
         }
     }
 
-	void GenSquare(int x, int y, Vector2 texture)
+	void GenSquare(int x, int y)
 	{
         newVertices.Add(new Vector3(x, y, 0));
         newVertices.Add(new Vector3(x, y + 1, 0));
@@ -142,12 +164,14 @@ public class Lightmap : MonoBehaviour
         newTriangles.Add((squareCount * 4) + 2);
         newTriangles.Add((squareCount * 4) + 3);
 
-        squareCount++;
+        squares.Add(new Tuple(x, y), squareCount);
+        squareCount += 1;
 
-        newUV.Add(new Vector2(texture.x / tTexDim + 1 / tPixDim, texture.y / tTexDim + 1 / tPixDim));
-        newUV.Add(new Vector2(texture.x / tTexDim + 1 / tPixDim, texture.y / tTexDim + 1 / tPixDim + tUnit));
-        newUV.Add(new Vector2(texture.x / tTexDim + 1 / tPixDim + tUnit, texture.y / tTexDim + 1 / tPixDim + tUnit));
-        newUV.Add(new Vector2(texture.x / tTexDim + 1 / tPixDim + tUnit, texture.y / tTexDim + 1 / tPixDim));
+        float light = 255f - (float)brightness[x, y];
+        newUV.Add(new Vector2(light / tTexDim + 1 / tPixDim, 0));
+        newUV.Add(new Vector2(light / tTexDim + 1 / tPixDim, 1));
+        newUV.Add(new Vector2(light / tTexDim + 1 / tPixDim + tUnit, 1));
+        newUV.Add(new Vector2(light / tTexDim + 1 / tPixDim + tUnit, 0));
 	}
 
     void UpdateMesh()
@@ -158,8 +182,12 @@ public class Lightmap : MonoBehaviour
         mesh.uv = newUV.ToArray();
         mesh.Optimize();
         mesh.RecalculateNormals();
+    }
 
+    void ClearMeshInfo()
+    {
         squareCount = 0;
+        squares.Clear();
         newVertices.Clear();
         newTriangles.Clear();
         newUV.Clear();
@@ -167,7 +195,7 @@ public class Lightmap : MonoBehaviour
 
 	void CalculateLight(object data)
 	{
-        brightness = new byte[numBlocksWide + 2 * ITERATIONS + 2, numBlocksHigh + 2 * ITERATIONS + 2];
+        brightness = new float[numBlocksWide + 2 * ITERATIONS + 2, numBlocksHigh + 2 * ITERATIONS + 2];
 
         Dictionary<string, object> info = (Dictionary<string, object>)data;
         byte[][][,] blockData = new byte[2][][,];
@@ -310,61 +338,10 @@ public class Lightmap : MonoBehaviour
 		var watch = Stopwatch.StartNew();
 
 		/*
-		 * Algorithm #1
-		 * 
-		 * This algorithm goes through every block ITERATIONS times.
-		 * 
-		 * Worse Case:
-		 * Array index count: O(ITERATIONS * (2 * ITERATIONS + blockWidth) * (2 * ITERATIONS + blockHeight) * 9)
-		 * Arithmetic operations count: O(ITERATIONS * (2 * ITERATIONS + blockWidth) * (2 * ITERATIONS + blockHeight) * 18)
-		 * 
-		 * Best Case:
-		 * Array index count: O(ITERATIONS * (2 * ITERATIONS + blockWidth) * (2 * ITERATIONS + blockHeight))
-		 * Arithmetic operations count: O(1)
-		 */
-		/*
-        byte[,] oldBrightness;
-        for (int i = 0; i < ITERATIONS; ++i)
-        {
-            oldBrightness = brightness;
-		    brightness = new byte[blockWidth + 2 * ITERATIONS + 2, blockHeight + 2 * ITERATIONS + 2];
-
-            for (int x = 1; x < blockWidth + 2 * ITERATIONS + 1; ++x)
-            {
-                for (int y = 1; y < blockHeight + 2 * ITERATIONS + 1; ++y)
-                {
-                    if (blocks[x, y] == 0)
-                    {
-                        brightness[x, y] = 255;
-                    }
-                    else
-                    {
-                        brightness[x, y] = (byte)Mathf.Max(0,
-                            oldBrightness[x, y + 1] - BLOCK_REDUCTION * LIGHT_UNIT,
-                            oldBrightness[x, y - 1] - BLOCK_REDUCTION * LIGHT_UNIT,
-                            oldBrightness[x + 1, y] - BLOCK_REDUCTION * LIGHT_UNIT,
-                            oldBrightness[x + 1, y - 1] - BLOCK_REDUCTION * DIAGONAL_UNIT,
-                            oldBrightness[x + 1, y + 1] - BLOCK_REDUCTION * DIAGONAL_UNIT,
-                            oldBrightness[x - 1, y] - BLOCK_REDUCTION * LIGHT_UNIT,
-                            oldBrightness[x - 1, y - 1] - BLOCK_REDUCTION * DIAGONAL_UNIT,
-                            oldBrightness[x - 1, y + 1] - BLOCK_REDUCTION * DIAGONAL_UNIT);
-                    }
-                }
-            }
-        }
-		*/
-
-		/*
 		 * Algorithm #2
 		 * 
 		 * This algorithm does one pass over every block and then only goes through blocks
 		 * that could potentially change their light value.
-		 * 
-		 * Testing has shown Algorithm #2 to be approximately twice as fast as Algorithm #1
-		 * 
-		 * Best Case:
-		 * 
-		 * Worse Case:
 		 * 
 		 */
 
@@ -377,7 +354,7 @@ public class Lightmap : MonoBehaviour
 				if (  blocks[x, y] == 0 && 
                     bgBlocks[x, y] == 0)
                 {
-					brightness[x, y] = 255;
+					brightness[x, y] = 255f;
 					if (blocks[x - 1, y - 1] != 0 || bgBlocks[x - 1, y - 1] != 0) changed.Add(new Tuple(x - 1, y - 1));
                     if (blocks[x - 1, y    ] != 0 || bgBlocks[x - 1, y    ] != 0) changed.Add(new Tuple(x - 1, y    ));
                     if (blocks[x - 1, y + 1] != 0 || bgBlocks[x - 1, y + 1] != 0) changed.Add(new Tuple(x - 1, y + 1));
@@ -391,13 +368,19 @@ public class Lightmap : MonoBehaviour
 		}
 
         // Go through light sources
-        foreach (HashSet<Tuple> chunkLight in lightData)
+        for (int i = 0; i < lightData.Length; ++i)
         {
+            HashSet<Tuple> chunkLight = lightData[i];
             foreach (Tuple pos in chunkLight)
             {
-                int x = pos.x + ITERATIONS + 1;
-                int y = pos.y + ITERATIONS + 1;
-                brightness[x, y] = 255;
+                int x = pos.x + ITERATIONS + 1 + ((i % 3) - 1) * numBlocksWide;
+                int y = pos.y + ITERATIONS + 1 + ((i / 3) - 1) * numBlocksHigh;
+                if (x < -ITERATIONS || x >= numBlocksWide + ITERATIONS || y < -ITERATIONS || y >= numBlocksHigh + ITERATIONS)
+                {
+                    continue;
+                }
+
+                brightness[x, y] = 255f;
                 if (blocks[x - 1, y - 1] != 0 || bgBlocks[x - 1, y - 1] != 0) changed.Add(new Tuple(x - 1, y - 1));
                 if (blocks[x - 1, y    ] != 0 || bgBlocks[x - 1, y    ] != 0) changed.Add(new Tuple(x - 1, y    ));
                 if (blocks[x - 1, y + 1] != 0 || bgBlocks[x - 1, y + 1] != 0) changed.Add(new Tuple(x - 1, y + 1));
@@ -409,7 +392,7 @@ public class Lightmap : MonoBehaviour
             }
         }
 
-		byte[,] oldBrightness = brightness;
+		float[,] oldBrightness = brightness;
 		HashSet<Tuple> oldChanged;
 		for (int i = 0; i < ITERATIONS; ++i)
 		{
@@ -429,62 +412,48 @@ public class Lightmap : MonoBehaviour
 				}
 
 				// Determine our maximal light value at this point in time.
-                byte lightValue;
-                if (  blocks[pos.x, pos.y] == 0 &&
-                    bgBlocks[pos.x, pos.y] != 0)
+                float lightValue;
+                if (blocks[pos.x, pos.y] == 0 && bgBlocks[pos.x, pos.y] == 0)
                 {
-                    lightValue = (byte)Mathf.Max(0,
-                                                 oldBrightness[pos.x    , pos.y + 1] - LIGHT_UNIT,
-                                                 oldBrightness[pos.x    , pos.y - 1] - LIGHT_UNIT,
-                                                 oldBrightness[pos.x + 1, pos.y    ] - LIGHT_UNIT,
-                                                 oldBrightness[pos.x + 1, pos.y - 1] - DIAGONAL_UNIT,
-                                                 oldBrightness[pos.x + 1, pos.y + 1] - DIAGONAL_UNIT,
-                                                 oldBrightness[pos.x - 1, pos.y    ] - LIGHT_UNIT,
-                                                 oldBrightness[pos.x - 1, pos.y - 1] - DIAGONAL_UNIT,
-                                                 oldBrightness[pos.x - 1, pos.y + 1] - DIAGONAL_UNIT);
+                    lightValue = 255f;
                 }
-                else if (blocks[pos.x, pos.y] != 0)
+                else if (blocks[pos.x, pos.y] == 0)
                 {
-                    lightValue = (byte)Mathf.Max(0,
-                                                 oldBrightness[pos.x    , pos.y + 1] - BLOCK_REDUCTION * LIGHT_UNIT,
-                                                 oldBrightness[pos.x    , pos.y - 1] - BLOCK_REDUCTION * LIGHT_UNIT,
-                                                 oldBrightness[pos.x + 1, pos.y    ] - BLOCK_REDUCTION * LIGHT_UNIT,
-                                                 oldBrightness[pos.x + 1, pos.y - 1] - BLOCK_REDUCTION * DIAGONAL_UNIT,
-                                                 oldBrightness[pos.x + 1, pos.y + 1] - BLOCK_REDUCTION * DIAGONAL_UNIT,
-                                                 oldBrightness[pos.x - 1, pos.y    ] - BLOCK_REDUCTION * LIGHT_UNIT,
-                                                 oldBrightness[pos.x - 1, pos.y - 1] - BLOCK_REDUCTION * DIAGONAL_UNIT,
-                                                 oldBrightness[pos.x - 1, pos.y + 1] - BLOCK_REDUCTION * DIAGONAL_UNIT);
+                    lightValue = Mathf.Max(0f,
+                                           oldBrightness[pos.x    , pos.y + 1] - LIGHT_UNIT,
+                                           oldBrightness[pos.x    , pos.y - 1] - LIGHT_UNIT,
+                                           oldBrightness[pos.x + 1, pos.y    ] - LIGHT_UNIT,
+                                           oldBrightness[pos.x + 1, pos.y - 1] - DIAGONAL_UNIT,
+                                           oldBrightness[pos.x + 1, pos.y + 1] - DIAGONAL_UNIT,
+                                           oldBrightness[pos.x - 1, pos.y    ] - LIGHT_UNIT,
+                                           oldBrightness[pos.x - 1, pos.y - 1] - DIAGONAL_UNIT,
+                                           oldBrightness[pos.x - 1, pos.y + 1] - DIAGONAL_UNIT);
                 }
                 else
                 {
-                    lightValue = 255;
+                    lightValue = Mathf.Max(0f,
+                                           oldBrightness[pos.x    , pos.y + 1] - BLOCK_REDUCTION * LIGHT_UNIT,
+                                           oldBrightness[pos.x    , pos.y - 1] - BLOCK_REDUCTION * LIGHT_UNIT,
+                                           oldBrightness[pos.x + 1, pos.y    ] - BLOCK_REDUCTION * LIGHT_UNIT,
+                                           oldBrightness[pos.x + 1, pos.y - 1] - BLOCK_REDUCTION * DIAGONAL_UNIT,
+                                           oldBrightness[pos.x + 1, pos.y + 1] - BLOCK_REDUCTION * DIAGONAL_UNIT,
+                                           oldBrightness[pos.x - 1, pos.y    ] - BLOCK_REDUCTION * LIGHT_UNIT,
+                                           oldBrightness[pos.x - 1, pos.y - 1] - BLOCK_REDUCTION * DIAGONAL_UNIT,
+                                           oldBrightness[pos.x - 1, pos.y + 1] - BLOCK_REDUCTION * DIAGONAL_UNIT);
                 }
 				brightness[pos.x, pos.y] = lightValue;
 
 				// Check our neighbors to see if they should be updated.
-				if (oldBrightness[pos.x - 1, pos.y - 1] < lightValue - DIAGONAL_UNIT * ((blocks[pos.x - 1, pos.y - 1] == 0) ? (byte)1 : BLOCK_REDUCTION)) changed.Add(new Tuple(pos.x - 1, pos.y - 1));
-                if (oldBrightness[pos.x - 1, pos.y    ] < lightValue - LIGHT_UNIT    * ((blocks[pos.x - 1, pos.y    ] == 0) ? (byte)1 : BLOCK_REDUCTION)) changed.Add(new Tuple(pos.x - 1, pos.y    ));
-                if (oldBrightness[pos.x - 1, pos.y + 1] < lightValue - DIAGONAL_UNIT * ((blocks[pos.x - 1, pos.y + 1] == 0) ? (byte)1 : BLOCK_REDUCTION)) changed.Add(new Tuple(pos.x - 1, pos.y + 1));
-                if (oldBrightness[pos.x    , pos.y - 1] < lightValue - LIGHT_UNIT    * ((blocks[pos.x    , pos.y - 1] == 0) ? (byte)1 : BLOCK_REDUCTION)) changed.Add(new Tuple(pos.x    , pos.y - 1));
-                if (oldBrightness[pos.x    , pos.y + 1] < lightValue - LIGHT_UNIT    * ((blocks[pos.x    , pos.y + 1] == 0) ? (byte)1 : BLOCK_REDUCTION)) changed.Add(new Tuple(pos.x    , pos.y + 1));
-                if (oldBrightness[pos.x + 1, pos.y - 1] < lightValue - DIAGONAL_UNIT * ((blocks[pos.x + 1, pos.y - 1] == 0) ? (byte)1 : BLOCK_REDUCTION)) changed.Add(new Tuple(pos.x + 1, pos.y - 1));
-                if (oldBrightness[pos.x + 1, pos.y    ] < lightValue - LIGHT_UNIT    * ((blocks[pos.x + 1, pos.y    ] == 0) ? (byte)1 : BLOCK_REDUCTION)) changed.Add(new Tuple(pos.x + 1, pos.y    ));
-                if (oldBrightness[pos.x + 1, pos.y + 1] < lightValue - DIAGONAL_UNIT * ((blocks[pos.x + 1, pos.y + 1] == 0) ? (byte)1 : BLOCK_REDUCTION)) changed.Add(new Tuple(pos.x + 1, pos.y + 1));
+				if (oldBrightness[pos.x - 1, pos.y - 1] < lightValue - DIAGONAL_UNIT * ((blocks[pos.x - 1, pos.y - 1] == 0) ? 1f : BLOCK_REDUCTION)) changed.Add(new Tuple(pos.x - 1, pos.y - 1));
+                if (oldBrightness[pos.x - 1, pos.y    ] < lightValue - LIGHT_UNIT    * ((blocks[pos.x - 1, pos.y    ] == 0) ? 1f : BLOCK_REDUCTION)) changed.Add(new Tuple(pos.x - 1, pos.y    ));
+                if (oldBrightness[pos.x - 1, pos.y + 1] < lightValue - DIAGONAL_UNIT * ((blocks[pos.x - 1, pos.y + 1] == 0) ? 1f : BLOCK_REDUCTION)) changed.Add(new Tuple(pos.x - 1, pos.y + 1));
+                if (oldBrightness[pos.x    , pos.y - 1] < lightValue - LIGHT_UNIT    * ((blocks[pos.x    , pos.y - 1] == 0) ? 1f : BLOCK_REDUCTION)) changed.Add(new Tuple(pos.x    , pos.y - 1));
+                if (oldBrightness[pos.x    , pos.y + 1] < lightValue - LIGHT_UNIT    * ((blocks[pos.x    , pos.y + 1] == 0) ? 1f : BLOCK_REDUCTION)) changed.Add(new Tuple(pos.x    , pos.y + 1));
+                if (oldBrightness[pos.x + 1, pos.y - 1] < lightValue - DIAGONAL_UNIT * ((blocks[pos.x + 1, pos.y - 1] == 0) ? 1f : BLOCK_REDUCTION)) changed.Add(new Tuple(pos.x + 1, pos.y - 1));
+                if (oldBrightness[pos.x + 1, pos.y    ] < lightValue - LIGHT_UNIT    * ((blocks[pos.x + 1, pos.y    ] == 0) ? 1f : BLOCK_REDUCTION)) changed.Add(new Tuple(pos.x + 1, pos.y    ));
+                if (oldBrightness[pos.x + 1, pos.y + 1] < lightValue - DIAGONAL_UNIT * ((blocks[pos.x + 1, pos.y + 1] == 0) ? 1f : BLOCK_REDUCTION)) changed.Add(new Tuple(pos.x + 1, pos.y + 1));
 			}
 		}
-
-		/*
-		 * Algorithm #3 (not implemented)
-		 * 
-		 * This algorighm uses a lot of memory to keep track of every light within range for
-		 * every block. Then you just calculate the closest light for every relevant block.
-		 * 
-		 * Best Case:
-		 * 
-		 * Worst Case:
-		 * 
-		 */
-
 		
 		watch.Stop ();
 		world.RecordLightingTime (watch.ElapsedMilliseconds);
@@ -493,7 +462,7 @@ public class Lightmap : MonoBehaviour
 		 */
 		oldBrightness = brightness;
 		
-		brightness = new byte[numBlocksWide, numBlocksHigh];
+		brightness = new float[numBlocksWide, numBlocksHigh];
 		
 		for (int x = 0; x < numBlocksWide; ++x)
 		{
@@ -503,4 +472,22 @@ public class Lightmap : MonoBehaviour
 			}
 		}
 	}
+
+    public void Relight(float light, int x, int y)
+    {
+        Tuple pos = new Tuple(x, y);
+        if (squares.ContainsKey(pos))
+        {
+            float invertLight = 255f - Mathf.Round(light);
+            newUV[squares[pos] * 4    ] = new Vector2(invertLight / tTexDim + 1 / tPixDim        , 0);
+            newUV[squares[pos] * 4 + 1] = new Vector2(invertLight / tTexDim + 1 / tPixDim        , 1);
+            newUV[squares[pos] * 4 + 2] = new Vector2(invertLight / tTexDim + 1 / tPixDim + tUnit, 1);
+            newUV[squares[pos] * 4 + 3] = new Vector2(invertLight / tTexDim + 1 / tPixDim + tUnit, 0);
+        }
+        else
+        {
+            GenSquare(x, y);
+        }
+        update = true;
+    }
 }

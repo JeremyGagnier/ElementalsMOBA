@@ -1,6 +1,19 @@
 ﻿using UnityEngine;
 using System.Collections;
 
+[System.Serializable]
+public struct Tuple
+{
+    public int x;
+    public int y;
+
+    public Tuple(int first, int second)
+    {
+        x = first;
+        y = second;
+    }
+}
+
 public class Game : MonoBehaviour
 {
     public GameObject physicsPrefab;

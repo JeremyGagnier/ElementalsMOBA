@@ -89,17 +89,17 @@ public class PhysPlayer : PhysicsMover {
         if (lastChunkPos.x != chunkPos.x || lastChunkPos.y != chunkPos.y ||
             lastBlockPos.x != blockPos.x || lastBlockPos.y != blockPos.y)
         {
-            HashSet<Tuple> lastLights = pManager.world.LightSourceAt(lastChunkPos.x, lastChunkPos.y);
+            HashSet<Tuple> lastLights = pManager.world.LightSourcesAt(lastChunkPos.x, lastChunkPos.y);
             if (lastLights != null)
             {
                 lastLights.Remove(lastBlockPos);
-                pManager.world.HackRelight(lastChunkPos.x, lastChunkPos.y);
+                pManager.world.RefreshBlock(lastChunkPos.x, lastChunkPos.y, lastBlockPos.x, lastBlockPos.y);
             }
-            HashSet<Tuple> lights = pManager.world.LightSourceAt(chunkPos.x, chunkPos.y);
+            HashSet<Tuple> lights = pManager.world.LightSourcesAt(chunkPos.x, chunkPos.y);
             if (lights != null)
             {
                 lights.Add(blockPos);
-                pManager.world.HackRelight(chunkPos.x, chunkPos.y);
+                pManager.world.RefreshBlock(chunkPos.x, chunkPos.y, blockPos.x, blockPos.y);
             }
             lastChunkPos = chunkPos;
             lastBlockPos = blockPos;

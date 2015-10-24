@@ -33,12 +33,12 @@ public class PhysicsManager : MonoBehaviour {
                 foreach (PhysicsMover mover in movers)
                 {
                     // This is obviously a hack, fix/remove this.
-                    HashSet<Tuple> sources = world.LightSourceAt(mover.position.x.ToInt() / world.blockWidth,
-                                                                 mover.position.y.ToInt() / world.blockHeight);
+                    HashSet<Tuple> sources = world.LightSourcesAt(mover.position.x.ToInt() / world.numBlocksWide,
+                                                                 mover.position.y.ToInt() / world.numBlocksHigh);
                     if (sources != null)
                     {
-                        sources.Add(new Tuple(mover.position.x.ToInt() % world.blockWidth,
-                                              mover.position.y.ToInt() % world.blockHeight));
+                        sources.Add(new Tuple(mover.position.x.ToInt() % world.numBlocksWide,
+                                              mover.position.y.ToInt() % world.numBlocksHigh));
                     }
                     //Debug.LogError((mover.position.x.ToInt() / world.blockWidth).ToString() + ", " +
                     //               (mover.position.y.ToInt() / world.blockHeight).ToString() + " : ");

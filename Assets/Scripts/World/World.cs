@@ -2,36 +2,27 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-
-[System.Serializable]
-public struct Tuple
-{
-    public int x;
-    public int y;
-
-    public Tuple(int first, int second)
-    {
-        x = first;
-        y = second;
-    }
-}
+using System.Diagnostics;
 
 public class World : MonoBehaviour
 {
     public const int MAX_LOADED_CHUNKS = 50;
     public static bool DEBUG = false;
 
-	public int blockWidth;
-	public int blockHeight;
-	public int chunkWidth;
-    public int chunkHeight;
+	public int numBlocksWide;
+	public int numBlocksHigh;
+	public int numChunksWide;
+    public int numChunksHigh;
     public GameObject blockmapPrefab;
     public GameObject lightmapPrefab;
     public GameObject backmapPrefab;
 
-	public Dictionary<Tuple, GameObject> generatedBlockmaps = new Dictionary<Tuple, GameObject>();
+    public Dictionary<Tuple, GameObject> generatedBlockmaps = new Dictionary<Tuple, GameObject>();
     public Dictionary<Tuple, GameObject> generatedLightmaps = new Dictionary<Tuple, GameObject>();
     public Dictionary<Tuple, GameObject> generatedBackmaps = new Dictionary<Tuple, GameObject>();
+    public Dictionary<Tuple, Blockmap> blockmaps = new Dictionary<Tuple, Blockmap>();
+    public Dictionary<Tuple, Lightmap> lightmaps = new Dictionary<Tuple, Lightmap>();
+    public Dictionary<Tuple, Backmap> backmaps = new Dictionary<Tuple, Backmap>();
     public Dictionary<Tuple, Dictionary<Tuple, int>> damage;
     public List<Tuple> generationOrder = new List<Tuple>();
 	public GameObject localPlayer;
@@ -43,13 +34,15 @@ public class World : MonoBehaviour
 
 	private long lightingPassesDone = 0;
 	private long lightingTimeTaken = 0;
+
+    private HashSet<Tuple> refreshLightQueue = new HashSet<Tuple>();
     
 	void Start ()
 	{
-        fullChunk = new byte[blockWidth, blockHeight];
-        for (int x = 0; x < blockWidth; ++x)
+        fullChunk = new byte[numBlocksWide, numBlocksHigh];
+        for (int x = 0; x < numBlocksWide; ++x)
         {
-            for (int y = 0; y < blockHeight; ++y)
+            for (int y = 0; y < numBlocksHigh; ++y)
             {
                 fullChunk[x, y] = 1;
             }
@@ -58,8 +51,8 @@ public class World : MonoBehaviour
 
 	void Update ()
 	{
-		int pcx = (int)localPlayer.transform.position.x / blockWidth;
-		int pcy = (int)localPlayer.transform.position.y / blockHeight;
+		int pcx = (int)localPlayer.transform.position.x / numBlocksWide;
+		int pcy = (int)localPlayer.transform.position.y / numBlocksHigh;
 
 		if (pcx != playerCX || pcy != playerCY)
 		{
@@ -68,7 +61,7 @@ public class World : MonoBehaviour
 			{
 				for (int y = pcy - 2; y < pcy + 3; ++y)
 				{
-					if (x < 0 || y < 0 || x >= chunkWidth || y >= chunkWidth)
+					if (x < 0 || y < 0 || x >= numChunksWide || y >= numChunksWide)
 					{
 						continue;
 					}
@@ -77,22 +70,25 @@ public class World : MonoBehaviour
 					{
                         GameObject blockmap = (GameObject)Instantiate(blockmapPrefab);
                         generatedBlockmaps[pos] = blockmap;
+                        blockmaps[pos] = blockmap.GetComponent<Blockmap>();
                         generationOrder.Add(pos);
                         blockmap.name = "Blockmap(" + x.ToString() + "," + y.ToString() + ")";
                         blockmap.transform.parent = this.transform;
-                        blockmap.GetComponent<Blockmap>().Setup(this, blockWidth, blockHeight, x, y);
+                        blockmap.GetComponent<Blockmap>().Setup(this, numBlocksWide, numBlocksHigh, x, y);
                         
                         GameObject backmap = (GameObject)Instantiate(backmapPrefab);
                         generatedBackmaps[pos] = backmap;
+                        backmaps[pos] = backmap.GetComponent<Backmap>();
                         backmap.name = "Backmap(" + x.ToString() + "," + y.ToString() + ")";
                         backmap.transform.parent = this.transform;
-                        backmap.GetComponent<Backmap>().Setup(this, blockWidth, blockHeight, x, y);
+                        backmap.GetComponent<Backmap>().Setup(this, numBlocksWide, numBlocksHigh, x, y);
 
                         GameObject lightmap = (GameObject)Instantiate(lightmapPrefab);
                         generatedLightmaps[pos] = lightmap;
+                        lightmaps[pos] = lightmap.GetComponent<Lightmap>();
                         lightmap.name = "Lightmap(" + x.ToString() + "," + y.ToString() + ")";
                         lightmap.transform.parent = this.transform;
-                        lightmap.GetComponent<Lightmap>().Setup(this, blockWidth, blockHeight, x, y);
+                        lightmap.GetComponent<Lightmap>().Setup(this, numBlocksWide, numBlocksHigh, x, y);
 					}
 				}
 			}
@@ -102,18 +98,15 @@ public class World : MonoBehaviour
 			{
 				for (int y = pcy - 1; y < pcy + 2; ++y)
 				{
-					if (x < 0 || y < 0 || x >= chunkWidth || y >= chunkWidth)
+					if (x < 0 || y < 0 || x >= numChunksWide || y >= numChunksWide)
 					{
 						continue;
 					}
                     Tuple pos = new Tuple(x, y);
 
-                    Lightmap lmap = generatedLightmaps[pos].GetComponent<Lightmap>();
-                    Blockmap bmap = generatedBlockmaps[pos].GetComponent<Blockmap>();
-                    Backmap bkmap = generatedBackmaps[pos].GetComponent<Backmap>();
-                    if (!lmap.isActive)
+                    if (!lightmaps[pos].isActive)
                     {
-                        lmap.Activate(bmap, bkmap);
+                        lightmaps[pos].Activate(blockmaps[pos], backmaps[pos]);
                     }
 				}
 			}
@@ -129,12 +122,15 @@ public class World : MonoBehaviour
                     {
                         DestroyObject(generatedBlockmaps[generationOrder[i]]);
                         generatedBlockmaps.Remove(generationOrder[i]);
+                        blockmaps.Remove(generationOrder[i]);
 
                         DestroyObject(generatedBackmaps[generationOrder[i]]);
                         generatedBackmaps.Remove(generationOrder[i]);
+                        backmaps.Remove(generationOrder[i]);
 
                         DestroyObject(generatedLightmaps[generationOrder[i]]);
                         generatedLightmaps.Remove(generationOrder[i]);
+                        lightmaps.Remove(generationOrder[i]);
 
                         generationOrder.RemoveAt(i);
 						break;
@@ -147,81 +143,132 @@ public class World : MonoBehaviour
 			Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
 			int blockHoverX = Mathf.RoundToInt(mousePos.x - 0.5f);
 			int blockHoverY = Mathf.RoundToInt(mousePos.y - 0.5f);
-			int cx = blockHoverX / blockWidth;
-			int cy = blockHoverY / blockHeight;
-			int bx = blockHoverX % blockWidth;
-			int by = blockHoverY % blockHeight;
+			int cx = blockHoverX / numBlocksWide;
+			int cy = blockHoverY / numBlocksHigh;
+			int bx = blockHoverX % numBlocksWide;
+			int by = blockHoverY % numBlocksHigh;
 			if (BlockAt (cx, cy, bx, by) != 0)
 		    {
-                generatedBlockmaps[new Tuple(cx, cy)].GetComponent<Blockmap>().DestroyBlock(bx, by);
+                blockmaps[new Tuple(cx, cy)].DestroyBlock(bx, by);
 			}
 		}
+
+        if (refreshLightQueue.Count != 0)
+        {
+            RefreshLight();
+        }
 	}
 
 	public byte BlockAt(int cx, int cy, int bx, int by)
 	{
-		if (cx < 0 || cx >= chunkWidth || cy < 0 || cy >= chunkHeight)
+		if (cx < 0 || cx >= numChunksWide || cy < 0 || cy >= numChunksHigh)
 		{
 			return (byte)1;
 		}
-        return generatedBlockmaps[new Tuple(cx, cy)].GetComponent<Blockmap>().blocks[bx, by];
+        return blockmaps[new Tuple(cx, cy)].blocks[bx, by];
 	}
 
     public byte BlockAt(int x, int y)
     {
-        return BlockAt(x / blockWidth, y / blockHeight, x % blockWidth, y % blockHeight);
+        return BlockAt(x / numBlocksWide, y / numBlocksHigh, x % numBlocksWide, y % numBlocksHigh);
     }
 
     public byte[,] BlockmapAt(int cx, int cy)
     {
-        if (cx < 0 || cx >= chunkWidth || cy < 0 || cy >= chunkHeight)
+        if (cx < 0 || cx >= numChunksWide || cy < 0 || cy >= numChunksHigh)
         {
             return fullChunk;
         }
-        return generatedBlockmaps[new Tuple(cx, cy)].GetComponent<Blockmap>().blocks;
+        return blockmaps[new Tuple(cx, cy)].blocks;
     }
 
     public byte BackAt(int cx, int cy, int bx, int by)
     {
-        if (cx < 0 || cx >= chunkWidth || cy < 0 || cy >= chunkHeight)
+        if (cx < 0 || cx >= numChunksWide || cy < 0 || cy >= numChunksHigh)
         {
             return (byte)1;
         }
-        return generatedBackmaps[new Tuple(cx, cy)].GetComponent<Backmap>().bgBlocks[bx, by];
+        return backmaps[new Tuple(cx, cy)].bgBlocks[bx, by];
     }
 
     public byte BackAt(int x, int y)
     {
-        return BackAt(x / blockWidth, y / blockHeight, x % blockWidth, y % blockHeight);
+        return BackAt(x / numBlocksWide, y / numBlocksHigh, x % numBlocksWide, y % numBlocksHigh);
     }
 
     public byte[,] BackmapAt(int cx, int cy)
     {
-        if (cx < 0 || cx >= chunkWidth || cy < 0 || cy >= chunkHeight)
+        if (cx < 0 || cx >= numChunksWide || cy < 0 || cy >= numChunksHigh)
         {
             return fullChunk;
         }
-        return generatedBackmaps[new Tuple(cx, cy)].GetComponent<Backmap>().bgBlocks;
+        return backmaps[new Tuple(cx, cy)].bgBlocks;
     }
 
-    public HashSet<Tuple> LightSourceAt(int cx, int cy)
+    public HashSet<Tuple> LightSourcesAt(int cx, int cy)
     {
-        if (cx < 0 || cx >= chunkWidth || cy < 0 || cy >= chunkHeight)
+        if (cx < 0 || cx >= numChunksWide || cy < 0 || cy >= numChunksHigh)
         {
             return emptyHashSet;
         }
         Tuple pos = new Tuple(cx, cy);
         if (generatedLightmaps.ContainsKey(pos))
         {
-            return generatedLightmaps[pos].GetComponent<Lightmap>().lightSources;
+            return lightmaps[pos].lightSources;
         }
         return null;
     }
 
+    public bool LightSouceAt(int cx, int cy, int bx, int by)
+    {
+        if (cx < 0 || cx >= numChunksWide || cy < 0 || cy >= numChunksHigh)
+        {
+            return false;
+        }
+        return lightmaps[new Tuple(cx, cy)].lightSources.Contains(new Tuple(bx, by));
+    }
+
+    public bool LightSouceAt(int x, int y)
+    {
+        return lightmaps[new Tuple(x / numBlocksWide, y / numBlocksHigh)].lightSources.Contains(new Tuple(x % numBlocksWide, y % numBlocksHigh));
+    }
+
+    public float BrightnessAt(int cx, int cy, int bx, int by)
+    {
+        if (cx < 0 || cx >= numChunksWide || cy < 0 || cy >= numChunksHigh)
+        {
+            return 0;
+        }
+        return lightmaps[new Tuple(cx, cy)].brightness[bx, by];
+    }
+
+    public float BrightnessAt(int x, int y)
+    {
+        
+        if (x < 0 || x >= numChunksWide * numBlocksWide || y < 0 || y >= numChunksHigh * numBlocksHigh)
+        {
+            return 0;
+        }
+        return lightmaps[new Tuple(x / numBlocksWide, y / numBlocksHigh)].brightness[x % numBlocksWide, y % numBlocksHigh];
+    }
+
+    public void SetBrightnessAt(float brightness, int cx, int cy, int bx, int by)
+    {
+        lightmaps[new Tuple(cx, cy)].Relight(brightness, bx, by);
+    }
+
+    public void SetBrightnessAt(float brightness, int x, int y)
+    {
+        Tuple chunkAt = new Tuple(x / numBlocksWide, y / numBlocksHigh);
+        lightmaps[chunkAt].Relight(brightness, x % numBlocksWide, y % numBlocksHigh);
+        blockmaps[chunkAt].Redraw(brightness, x % numBlocksWide, y % numBlocksHigh);
+        backmaps[chunkAt].Redraw(brightness, BlockAt(x, y), x % numBlocksWide, y % numBlocksHigh);
+    }
+
     public void DamageBlock(int x, int y, int dmg)
     {
-        Tuple c = new Tuple(x / blockWidth, y / blockHeight);
-        Tuple b = new Tuple(x % blockWidth, y % blockHeight);
+        Tuple c = new Tuple(x / numBlocksWide, y / numBlocksHigh);
+        Tuple b = new Tuple(x % numBlocksWide, y % numBlocksHigh);
 
         if (damage.ContainsKey(c))
         {
@@ -250,21 +297,153 @@ public class World : MonoBehaviour
 		Log("Lighting: Last: " +(((float)time) / 1000f).ToString("n3") + ", Average: " + ((float)(lightingTimeTaken / lightingPassesDone) / 1000f).ToString("n3"));
 	}
 
-    public void HackRelight(int cx, int cy)
+    public void RefreshBlock(int cx, int cy, int bx, int by)
     {
-        Tuple pos = new Tuple(cx, cy);
+        refreshLightQueue.Add(new Tuple(bx + cx * numBlocksWide, by + cy * numBlocksHigh));
+    }
 
-        Lightmap lmap = generatedLightmaps[pos].GetComponent<Lightmap>();
-        Blockmap bmap = generatedBlockmaps[pos].GetComponent<Blockmap>();
-        Backmap bkmap = generatedBackmaps[pos].GetComponent<Backmap>();
-        lmap.Activate(bmap, bkmap);
+    // This needs much more optimizing....
+    public void RefreshLight()
+    {
+        //var watch = Stopwatch.StartNew();
+
+        Dictionary<Tuple, float> modList = new Dictionary<Tuple, float>();
+
+        for (int i = 0; i < Lightmap.ITERATIONS; ++i)
+        {
+            //long before = watch.ElapsedMilliseconds;
+            //long after;
+
+            HashSet<Tuple> oldChecklist = refreshLightQueue;
+            refreshLightQueue = new HashSet<Tuple>();
+
+            foreach (Tuple pos in oldChecklist)
+            {
+                // Determine our maximal light value at this point in time.
+                float lightValue = 0;
+
+                Tuple t = new Tuple(pos.x / numBlocksWide, pos.y / numBlocksHigh);
+                Tuple t1 = new Tuple((pos.x - 1) / numBlocksWide, (pos.y - 1) / numBlocksHigh);
+                Tuple t2 = new Tuple((pos.x    ) / numBlocksWide, (pos.y - 1) / numBlocksHigh);
+                Tuple t3 = new Tuple((pos.x + 1) / numBlocksWide, (pos.y - 1) / numBlocksHigh);
+                Tuple t4 = new Tuple((pos.x - 1) / numBlocksWide, (pos.y    ) / numBlocksHigh);
+                Tuple t5 = new Tuple((pos.x + 1) / numBlocksWide, (pos.y    ) / numBlocksHigh);
+                Tuple t6 = new Tuple((pos.x - 1) / numBlocksWide, (pos.y + 1) / numBlocksHigh);
+                Tuple t7 = new Tuple((pos.x    ) / numBlocksWide, (pos.y + 1) / numBlocksHigh);
+                Tuple t8 = new Tuple((pos.x + 1) / numBlocksWide, (pos.y + 1) / numBlocksHigh);
+                float l = lightmaps[t].brightness[pos.x % numBlocksWide, pos.y % numBlocksHigh];
+                float l1 = lightmaps[t1].brightness[(pos.x - 1) % numBlocksWide, (pos.y - 1) % numBlocksHigh];
+                float l2 = lightmaps[t2].brightness[(pos.x    ) % numBlocksWide, (pos.y - 1) % numBlocksHigh];
+                float l3 = lightmaps[t3].brightness[(pos.x + 1) % numBlocksWide, (pos.y - 1) % numBlocksHigh];
+                float l4 = lightmaps[t4].brightness[(pos.x - 1) % numBlocksWide, (pos.y    ) % numBlocksHigh];
+                float l5 = lightmaps[t5].brightness[(pos.x + 1) % numBlocksWide, (pos.y    ) % numBlocksHigh];
+                float l6 = lightmaps[t6].brightness[(pos.x - 1) % numBlocksWide, (pos.y + 1) % numBlocksHigh];
+                float l7 = lightmaps[t7].brightness[(pos.x    ) % numBlocksWide, (pos.y + 1) % numBlocksHigh];
+                float l8 = lightmaps[t8].brightness[(pos.x + 1) % numBlocksWide, (pos.y + 1) % numBlocksHigh];
+                byte b = blockmaps[t].blocks[pos.x % numBlocksWide, pos.y % numBlocksHigh];
+                byte b1 = blockmaps[t1].blocks[(pos.x - 1) % numBlocksWide, (pos.y - 1) % numBlocksHigh];
+                byte b2 = blockmaps[t2].blocks[(pos.x    ) % numBlocksWide, (pos.y - 1) % numBlocksHigh];
+                byte b3 = blockmaps[t3].blocks[(pos.x + 1) % numBlocksWide, (pos.y - 1) % numBlocksHigh];
+                byte b4 = blockmaps[t4].blocks[(pos.x - 1) % numBlocksWide, (pos.y    ) % numBlocksHigh];
+                byte b5 = blockmaps[t5].blocks[(pos.x + 1) % numBlocksWide, (pos.y    ) % numBlocksHigh];
+                byte b6 = blockmaps[t6].blocks[(pos.x - 1) % numBlocksWide, (pos.y + 1) % numBlocksHigh];
+                byte b7 = blockmaps[t7].blocks[(pos.x    ) % numBlocksWide, (pos.y + 1) % numBlocksHigh];
+                byte b8 = blockmaps[t8].blocks[(pos.x + 1) % numBlocksWide, (pos.y + 1) % numBlocksHigh];
+
+                if ((b == 0 && BackAt(pos.x, pos.y) == 0) || LightSouceAt(pos.x, pos.y))
+                {
+                    lightValue = 255f;
+                }
+                else if (b == 0)
+                {
+                    lightValue = Mathf.Max(0,
+                                           l1 - Lightmap.DIAGONAL_UNIT,
+                                           l2 - Lightmap.LIGHT_UNIT,
+                                           l3 - Lightmap.DIAGONAL_UNIT,
+                                           l4 - Lightmap.LIGHT_UNIT,
+                                           l5 - Lightmap.LIGHT_UNIT,
+                                           l6 - Lightmap.DIAGONAL_UNIT,
+                                           l7 - Lightmap.LIGHT_UNIT,
+                                           l8 - Lightmap.DIAGONAL_UNIT);
+                }
+                else
+                {
+                    float adjacent = Lightmap.BLOCK_REDUCTION * Lightmap.LIGHT_UNIT;
+                    float diagonal = Lightmap.BLOCK_REDUCTION * Lightmap.DIAGONAL_UNIT;
+                    lightValue = Mathf.Max(0,
+                                           l1 - diagonal,
+                                           l2 - adjacent,
+                                           l3 - diagonal,
+                                           l4 - adjacent,
+                                           l5 - adjacent,
+                                           l6 - diagonal,
+                                           l7 - adjacent,
+                                           l8 - diagonal);
+                }
+
+                float diag = lightValue - Lightmap.DIAGONAL_UNIT;
+                float horz = lightValue - Lightmap.LIGHT_UNIT;
+                float bdiag = lightValue - Lightmap.BLOCK_REDUCTION * Lightmap.DIAGONAL_UNIT;
+                float bhorz = lightValue - Lightmap.BLOCK_REDUCTION * Lightmap.LIGHT_UNIT;
+                if (l < lightValue)
+                {
+                    lightmaps[t].brightness[pos.x % numBlocksWide, pos.y % numBlocksHigh] = lightValue;
+                    if (modList.ContainsKey(new Tuple(pos.x, pos.y)))
+                    {
+                        modList[new Tuple(pos.x, pos.y)] = lightValue;
+                    }
+                    else
+                    {
+                        modList.Add(new Tuple(pos.x, pos.y), lightValue);
+                    }
+                    if (l1 < (b1 == 0 ? diag : bdiag)) refreshLightQueue.Add(new Tuple(pos.x - 1, pos.y - 1));
+                    if (l2 < (b2 == 0 ? horz : bhorz)) refreshLightQueue.Add(new Tuple(pos.x    , pos.y - 1));
+                    if (l3 < (b3 == 0 ? diag : bdiag)) refreshLightQueue.Add(new Tuple(pos.x + 1, pos.y - 1));
+                    if (l4 < (b4 == 0 ? horz : bhorz)) refreshLightQueue.Add(new Tuple(pos.x - 1, pos.y    ));
+                    if (l5 < (b5 == 0 ? horz : bhorz)) refreshLightQueue.Add(new Tuple(pos.x + 1, pos.y    ));
+                    if (l6 < (b6 == 0 ? diag : bdiag)) refreshLightQueue.Add(new Tuple(pos.x - 1, pos.y + 1));
+                    if (l7 < (b7 == 0 ? horz : bhorz)) refreshLightQueue.Add(new Tuple(pos.x    , pos.y + 1));
+                    if (l8 < (b8 == 0 ? diag : bdiag)) refreshLightQueue.Add(new Tuple(pos.x + 1, pos.y + 1));
+                }
+                else if (l > lightValue)
+                {
+                    lightmaps[t].brightness[pos.x % numBlocksWide, pos.y % numBlocksHigh] = lightValue;
+                    if (modList.ContainsKey(new Tuple(pos.x, pos.y)))
+                    {
+                        modList[new Tuple(pos.x, pos.y)] = lightValue;
+                    }
+                    else
+                    {
+                        modList.Add(new Tuple(pos.x, pos.y), lightValue);
+                    }
+                    if (l1 > (b1 == 0 ? diag : bdiag)) refreshLightQueue.Add(new Tuple(pos.x - 1, pos.y - 1));
+                    if (l2 > (b2 == 0 ? horz : bhorz)) refreshLightQueue.Add(new Tuple(pos.x    , pos.y - 1));
+                    if (l3 > (b3 == 0 ? diag : bdiag)) refreshLightQueue.Add(new Tuple(pos.x + 1, pos.y - 1));
+                    if (l4 > (b4 == 0 ? horz : bhorz)) refreshLightQueue.Add(new Tuple(pos.x - 1, pos.y    ));
+                    if (l5 > (b5 == 0 ? horz : bhorz)) refreshLightQueue.Add(new Tuple(pos.x + 1, pos.y    ));
+                    if (l6 > (b6 == 0 ? diag : bdiag)) refreshLightQueue.Add(new Tuple(pos.x - 1, pos.y + 1));
+                    if (l7 > (b7 == 0 ? horz : bhorz)) refreshLightQueue.Add(new Tuple(pos.x    , pos.y + 1));
+                    if (l8 > (b8 == 0 ? diag : bdiag)) refreshLightQueue.Add(new Tuple(pos.x + 1, pos.y + 1));
+                }
+            }
+            //after = watch.ElapsedMilliseconds;
+            //UnityEngine.Debug.Log(oldChecklist.Count + " : " + (after - before).ToString());
+        }
+        //watch.Stop();
+        //UnityEngine.Debug.Log("Total time taken: " + watch.ElapsedMilliseconds);
+        refreshLightQueue.Clear();
+
+        foreach (Tuple pos in modList.Keys)
+        {
+            SetBrightnessAt(modList[pos], pos.x, pos.y);
+        }
     }
 
     public static void Log(string message)
     {
         if (DEBUG)
         {
-            Debug.Log("World: " + message);
+            UnityEngine.Debug.Log("World: " + message);
         }
     }
 }

@@ -3,6 +3,8 @@
 A 2d Sandbox platformer fighting moba game
 
 Short term goals:
+- change jumping into a move
+- sort out all physics variables
 - make hitboxes damage blocks
 - make hitboxes damage characters
 - make fire elemental moveset

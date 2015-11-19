@@ -5,7 +5,7 @@ using System.Collections.Generic;
 public class PhysicsManager : MonoBehaviour {
 
     public static FInt timestep = new FInt(0.01666f);
-    public static bool DEBUG = false;
+    public static bool DEBUG = true;
 
     public World world;
 
@@ -23,16 +23,9 @@ public class PhysicsManager : MonoBehaviour {
         {
             if (Game.frame > 10)         // Don't do anything until the game scene is loaded
             {
-                /*
                 foreach (PhysicsMover mover in movers)
                 {
-                    // This is obviously a hack, fix/remove this.
-                    world.LightSourceAt(mover.position.x.ToInt() / world.chunkWidth,
-                                        mover.position.y.ToInt() / world.chunkHeight).Clear();
-                }*/
-                foreach (PhysicsMover mover in movers)
-                {
-                    // This is obviously a hack, fix/remove this.
+                    
                     HashSet<Tuple> sources = world.LightSourcesAt(mover.position.x.ToInt() / world.numBlocksWide,
                                                                  mover.position.y.ToInt() / world.numBlocksHigh);
                     if (sources != null)
@@ -40,41 +33,16 @@ public class PhysicsManager : MonoBehaviour {
                         sources.Add(new Tuple(mover.position.x.ToInt() % world.numBlocksWide,
                                               mover.position.y.ToInt() % world.numBlocksHigh));
                     }
-                    //Debug.LogError((mover.position.x.ToInt() / world.blockWidth).ToString() + ", " +
-                    //               (mover.position.y.ToInt() / world.blockHeight).ToString() + " : ");
                     MoveMover(mover);
                 }
             }
         }
     }
 
-    private void UpdateVelocity(PhysicsMover mover)
-    {
-        if (!mover.grounded)
-        {
-            if (mover.velocity.y > -mover.fallSpeed)
-            {
-                mover.velocity.y -= mover.fallAccel * timestep;
-            }
-            if (mover.velocity.y < -mover.fallSpeed && !mover.carried)
-            {
-                mover.velocity.y = -mover.fallSpeed;
-            }
-        }
-        if (mover.allowInput)
-        {
-            mover.velocity = mover.ApplyInput(mover.velocity);
-        }
-    }
-
     private void MoveMover(PhysicsMover mover)
     {
-        UpdateVelocity(mover);
+        mover.velocity = mover.UpdateVelocity(mover.velocity);
         CollideWithWorld(mover);
-        if (mover.grounded)
-        {
-            mover.grounded = IsGrounded(mover);
-        }
 
         float px = mover.position.x.ToFloat();
         float py = mover.position.y.ToFloat();
@@ -96,15 +64,13 @@ public class PhysicsManager : MonoBehaviour {
                 // Set the left and right x boundaries given the direction of motion.
                 if (mover.velocity.x < FInt.Zero())
                 {
-                    int minX = (mover.position.x + pos.x).ToInt();
-                    FInt minOffX = mover.position.x + pos.x - new FInt(minX);
+                    FInt minOffX = FInt.RawFInt((mover.position.x + pos.x).FractionalBits());
                     xTime = minOffX / -mover.velocity.x;
                 }
                 else if (mover.velocity.x > FInt.Zero())
                 {
-                    int maxX = (mover.position.x + pos.x + pos.w).ToInt() + 1;
-                    FInt maxOffX = new FInt(maxX) - (mover.position.x + pos.x + pos.w);
-                    xTime = maxOffX / mover.velocity.x;
+                    FInt maxOffX = FInt.RawFInt((mover.position.x + pos.x + pos.w).FractionalBits());
+                    xTime = (new FInt(1) - maxOffX) / mover.velocity.x;
                 }
 
                 // If we're entering a new x unit without moving first do some stuff.
@@ -127,21 +93,18 @@ public class PhysicsManager : MonoBehaviour {
                         // If we're not going to collide with anything then update the position up to the
                         // next possible collision.
                         xTime = FInt.One() / mover.velocity.x.Abs();
-                        Log("x force moved");
                     }
                 }
 
                 if (mover.velocity.y < FInt.Zero())
                 {
-                    int minY = (mover.position.y + pos.y).ToInt();
-                    FInt minOffY = mover.position.y + pos.y - new FInt(minY);
+                    FInt minOffY = FInt.RawFInt((mover.position.y + pos.y).FractionalBits());
                     yTime = minOffY / -mover.velocity.y;
                 }
                 else if (mover.velocity.y > FInt.Zero())
                 {
-                    int maxY = (mover.position.y + pos.y + pos.h).ToInt() + 1;
-                    FInt maxOffY = new FInt(maxY) - (mover.position.y + pos.y + pos.h);
-                    yTime = maxOffY / mover.velocity.y;
+                    FInt maxOffY = FInt.RawFInt((mover.position.y + pos.y + pos.h).FractionalBits());
+                    yTime = (new FInt(1) - maxOffY) / mover.velocity.y;
                 }
                 if (yTime.rawValue == 0)
                 {
@@ -158,7 +121,6 @@ public class PhysicsManager : MonoBehaviour {
                     else
                     {
                         yTime = FInt.One() / mover.velocity.y.Abs();
-                        Log("y force moved");
                     }
                 }
 
@@ -182,6 +144,7 @@ public class PhysicsManager : MonoBehaviour {
             }
 
             mover.position += mover.velocity * minTimestep;
+
             step -= minTimestep;
 
             if (step.rawValue == 0)
@@ -247,24 +210,6 @@ public class PhysicsManager : MonoBehaviour {
             }
         }
         return blocksHit;
-    }
-
-    private bool IsGrounded(PhysicsMover mover)
-    {
-        foreach (PhysBox pos in mover.hitbox)
-        {
-            int yPos = (mover.position.y + pos.y).ToInt() - 1;
-            int xMin = (mover.position.x + pos.x).ToInt() - 1;
-            int xMax = (mover.position.x + pos.x + pos.w - FInt.RawFInt(1)).ToInt() + 1;
-            for (int x = xMin + 1; x < xMax; ++x)
-            {
-                if (world.BlockAt(x, yPos) != 0)
-                {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 
     public static void Log(string message)

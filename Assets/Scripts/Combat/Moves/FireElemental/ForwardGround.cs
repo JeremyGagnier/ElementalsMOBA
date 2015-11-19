@@ -35,27 +35,27 @@ public class FireForwardGround : Move {
                 break;
             case 5:
                 mgr.hitboxes.Add(hitbox1);
-                hitbox1.pos.x = new FInt(owner.FacingRight ? 1 : -1);
+                hitbox1.pos.x = new FInt(owner.facingRight ? 1 : -1);
                 hitbox1.pos.y = new FInt(0.3);
                 hitbox1.pos.r = new FInt(0.5);
                 break;
             case 6:
-                hitbox1.pos.x = new FInt(owner.FacingRight ? 1 : -1);
+                hitbox1.pos.x = new FInt(owner.facingRight ? 1 : -1);
                 hitbox1.pos.y = new FInt(0.3);
                 hitbox1.pos.r = new FInt(0.5);
                 break;
             case 7:
-                hitbox1.pos.x = new FInt(owner.FacingRight ? 1 : -1);
+                hitbox1.pos.x = new FInt(owner.facingRight ? 1 : -1);
                 hitbox1.pos.y = new FInt(0.3);
                 hitbox1.pos.r = new FInt(0.5);
                 break;
             case 8:
-                hitbox1.pos.x = new FInt(owner.FacingRight ? 1 : -1);
+                hitbox1.pos.x = new FInt(owner.facingRight ? 1 : -1);
                 hitbox1.pos.y = new FInt(0.3);
                 hitbox1.pos.r = new FInt(0.5);
                 break;
             case 9:
-                hitbox1.pos.x = new FInt(owner.FacingRight ? 1 : -1);
+                hitbox1.pos.x = new FInt(owner.facingRight ? 1 : -1);
                 hitbox1.pos.y = new FInt(0.3);
                 hitbox1.pos.r = new FInt(0.5);
                 break;
@@ -78,11 +78,10 @@ public class FireForwardGround : Move {
 
     public override void Trigger(CombatManager mgr)
     {
-        if (!((Input.GetAxis("HorizontalAttack") == 1 && owner.FacingRight) ||
-              (Input.GetAxis("HorizontalAttack") == -1 && !owner.FacingRight)) ||
+        if (!((InputManager.forwardAttackJustPressed && owner.facingRight) ||
+              (InputManager.backAttackJustPressed && !owner.facingRight)) ||
             owner.blockingMove ||
-            !owner.AllowInput ||
-            !owner.Grounded)
+            owner.state != PhysicsMover.State.GROUNDED)
         {
             return;
         }

@@ -112,6 +112,17 @@ public class FInt
         return (int)(rawValue >> FLOATING_BITS);
     }
 
+    public int Round()
+    {
+        long flat = rawValue >> FLOATING_BITS;
+        long remainder = rawValue - (flat << FLOATING_BITS);
+        if (remainder > (long)(1 << (FLOATING_BITS - 1)))
+        {
+            return (int)flat + 1;
+        }
+        return (int)flat;
+    }
+
     public float ToFloat()
     {
         return ((float)rawValue) / (1 << FLOATING_BITS);
@@ -126,7 +137,9 @@ public class FInt
 
     public int FractionalBits()
     {
-        return (int)(((ulong)(rawValue << 48)) >> 48);
+        long flat = rawValue >> FLOATING_BITS;
+        long remainder = rawValue - (flat << FLOATING_BITS);
+        return (int)remainder;
     }
 
     public static FInt operator +(FInt x, FInt y)

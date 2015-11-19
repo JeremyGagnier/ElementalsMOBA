@@ -72,16 +72,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 93f3fdf9cb1fbf84cb7f30fc9a0a55e6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  blockWidth: 0
-  blockHeight: 0
-  chunkx: 0
-  chunky: 0
+  numBlocksWide: 0
+  numBlocksHigh: 0
+  chunkPosX: 0
+  chunkPosY: 0
   newVertices: []
   newTriangles: 
   newUV: []
   isActive: 0
   update: 0
-  spotlightPrefab: {fileID: 0}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1

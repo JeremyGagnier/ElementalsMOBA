@@ -37,9 +37,6 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
---- !u!127 &3
-LevelGameManager:
-  m_ObjectHideFlags: 0
 --- !u!157 &4
 LightmapSettings:
   m_ObjectHideFlags: 0
@@ -68,6 +65,7 @@ LightmapSettings:
     m_TextureCompression: 0
     m_FinalGather: 0
     m_FinalGatherRayCount: 1024
+    m_ReflectionCompression: 2
   m_LightmapSnapshot: {fileID: 0}
   m_RuntimeCPUUsage: 25
 --- !u!196 &5
@@ -114,10 +112,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f5d0d4986ebbdce43be9417143eb8ad9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  physicsPrefab: {fileID: 145160, guid: fa2fdb545cc368b459b65e3d060a0297, type: 2}
-  combatPrefab: {fileID: 150638, guid: 9fcc590889c5e2542a30ddcfa07d762e, type: 2}
-  worldPrefab: {fileID: 196540, guid: cf3ecf57ff1a1a64c80a9b994a6c058a, type: 2}
-  fireElemental: {fileID: 181788, guid: b42ab6ba01092c44b9daa46899a71afd, type: 2}
 --- !u!4 &646094110
 Transform:
   m_ObjectHideFlags: 0

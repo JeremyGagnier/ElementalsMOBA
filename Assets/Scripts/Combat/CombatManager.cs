@@ -19,8 +19,8 @@ public class CombatManager : MonoBehaviour
                 hitbox.pos.y != null &&
                 hitbox.pos.r != null)
             {
-                Gizmos.DrawSphere(new Vector3((hitbox.pos.x + hitbox.sourcePlayer.Position.x).ToFloat(),
-                                              (hitbox.pos.y + hitbox.sourcePlayer.Position.y).ToFloat()),
+                Gizmos.DrawSphere(new Vector3((hitbox.pos.x + hitbox.sourcePlayer.position.x).ToFloat(),
+                                              (hitbox.pos.y + hitbox.sourcePlayer.position.y).ToFloat()),
                                               hitbox.pos.r.ToFloat());
             }
         }
@@ -28,8 +28,8 @@ public class CombatManager : MonoBehaviour
         foreach (Hurtbox hurtbox in hurtboxes)
         {
             Gizmos.color = new Color(0f, 1f, 0f, 0.5f);
-            Gizmos.DrawSphere(new Vector3((hurtbox.pos.x + hurtbox.player.Position.x).ToFloat(),
-                                          (hurtbox.pos.y + hurtbox.player.Position.y).ToFloat()),
+            Gizmos.DrawSphere(new Vector3((hurtbox.pos.x + hurtbox.player.position.x).ToFloat(),
+                                          (hurtbox.pos.y + hurtbox.player.position.y).ToFloat()),
                                           hurtbox.pos.r.ToFloat());
         }
     }

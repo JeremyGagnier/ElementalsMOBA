@@ -16,10 +16,10 @@ public struct Tuple
 
 public class Game : MonoBehaviour
 {
-    public GameObject physicsPrefab;
-    public GameObject combatPrefab;
-    public GameObject worldPrefab;
-    public GameObject fireElemental;
+    private GameObject physicsPrefab;
+    private GameObject combatPrefab;
+    private GameObject worldPrefab;
+    private GameObject fireElemental;
 
     private PhysicsManager physics = null;
     private CombatManager combat = null;
@@ -27,27 +27,45 @@ public class Game : MonoBehaviour
 
     public static int frame = 0;
 
+    void Awake()
+    {
+        physicsPrefab = Resources.Load("Prefabs/Physics") as GameObject;
+        combatPrefab = Resources.Load("Prefabs/Combat") as GameObject;
+        worldPrefab = Resources.Load("Prefabs/World") as GameObject;
+        fireElemental = Resources.Load("Prefabs/Characters/FireElemental") as GameObject;
+    }
+
 	void Start ()
     {
         // Create the fundamental classes and set them up
-        physics = Instantiate(physicsPrefab).GetComponent<PhysicsManager>();
-        combat = Instantiate(combatPrefab).GetComponent<CombatManager>();
-        world = Instantiate(worldPrefab).GetComponent<World>();
+        GameObject physicsObject = Instantiate(physicsPrefab);
+        physicsObject.name = "Physics Manager";
+        physics = physicsObject.GetComponent<PhysicsManager>();
+
+        GameObject combatObject = Instantiate(combatPrefab);
+        combatObject.name = "Combat Manager";
+        combat = combatObject.GetComponent<CombatManager>();
+
+        GameObject worldObject = Instantiate(worldPrefab);
+        worldObject.name = "World";
+        world = worldObject.GetComponent<World>();
+
         physics.world = world;
 
         CreatePlayer(fireElemental);
     }
 
-    void CreatePlayer(GameObject elemental)
+    private void CreatePlayer(GameObject elemental)
     {
         GameObject player = Instantiate(elemental);
         world.localPlayer = player;
-        PhysPlayer mover = player.GetComponent<PhysPlayer>();
-        physics.AddMover(mover);
+
         Combatent combatent = player.GetComponent<Combatent>();
         combat.AddCombatent(combatent);
-        combatent.phys = (PhysicsMover)mover;
         combatent.manager = combat;
+
+        PhysicsMover mover = combatent as PhysicsMover;
+        physics.AddMover(mover);
 
     }
 

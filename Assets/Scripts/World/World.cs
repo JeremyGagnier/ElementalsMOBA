@@ -8,24 +8,25 @@ public class World : MonoBehaviour
 {
     public const int MAX_LOADED_CHUNKS = 50;
     public static bool DEBUG = false;
+    
+	[NonSerialized] public int numBlocksWide = 50;
+    [NonSerialized] public int numBlocksHigh = 40;
+    [NonSerialized] public int numChunksWide = 30;
+    [NonSerialized] public int numChunksHigh = 10;
+    [NonSerialized] public GameObject localPlayer;
 
-	public int numBlocksWide;
-	public int numBlocksHigh;
-	public int numChunksWide;
-    public int numChunksHigh;
-    public GameObject blockmapPrefab;
-    public GameObject lightmapPrefab;
-    public GameObject backmapPrefab;
+    private GameObject blockmapPrefab;
+    private GameObject lightmapPrefab;
+    private GameObject backmapPrefab;
 
-    public Dictionary<Tuple, GameObject> generatedBlockmaps = new Dictionary<Tuple, GameObject>();
-    public Dictionary<Tuple, GameObject> generatedLightmaps = new Dictionary<Tuple, GameObject>();
-    public Dictionary<Tuple, GameObject> generatedBackmaps = new Dictionary<Tuple, GameObject>();
-    public Dictionary<Tuple, Blockmap> blockmaps = new Dictionary<Tuple, Blockmap>();
-    public Dictionary<Tuple, Lightmap> lightmaps = new Dictionary<Tuple, Lightmap>();
-    public Dictionary<Tuple, Backmap> backmaps = new Dictionary<Tuple, Backmap>();
-    public Dictionary<Tuple, Dictionary<Tuple, int>> damage;
-    public List<Tuple> generationOrder = new List<Tuple>();
-	public GameObject localPlayer;
+    private Dictionary<Tuple, GameObject> generatedBlockmaps = new Dictionary<Tuple, GameObject>();
+    private Dictionary<Tuple, GameObject> generatedLightmaps = new Dictionary<Tuple, GameObject>();
+    private Dictionary<Tuple, GameObject> generatedBackmaps = new Dictionary<Tuple, GameObject>();
+    private Dictionary<Tuple, Blockmap> blockmaps = new Dictionary<Tuple, Blockmap>();
+    private Dictionary<Tuple, Lightmap> lightmaps = new Dictionary<Tuple, Lightmap>();
+    private Dictionary<Tuple, Backmap> backmaps = new Dictionary<Tuple, Backmap>();
+    private Dictionary<Tuple, Dictionary<Tuple, int>> damage;
+    private List<Tuple> generationOrder = new List<Tuple>();
 	private int playerCX = -1;
 	private int playerCY = -1;
 
@@ -36,8 +37,15 @@ public class World : MonoBehaviour
 	private long lightingTimeTaken = 0;
 
     private HashSet<Tuple> refreshLightQueue = new HashSet<Tuple>();
-    
-	void Start ()
+
+    void Awake()
+    {
+        blockmapPrefab = Resources.Load("Prefabs/Blockmap") as GameObject;
+        lightmapPrefab = Resources.Load("Prefabs/Lightmap") as GameObject;
+        backmapPrefab = Resources.Load("Prefabs/Backmap") as GameObject;
+    }
+
+	void Start()
 	{
         fullChunk = new byte[numBlocksWide, numBlocksHigh];
         for (int x = 0; x < numBlocksWide; ++x)
@@ -49,7 +57,7 @@ public class World : MonoBehaviour
         }
 	}
 
-	void Update ()
+	void Update()
 	{
 		int pcx = (int)localPlayer.transform.position.x / numBlocksWide;
 		int pcy = (int)localPlayer.transform.position.y / numBlocksHigh;
@@ -356,7 +364,7 @@ public class World : MonoBehaviour
                 }
                 else if (b == 0)
                 {
-                    lightValue = Mathf.Max(0,
+                    lightValue = Mathf.Max(0f,
                                            l1 - Lightmap.DIAGONAL_UNIT,
                                            l2 - Lightmap.LIGHT_UNIT,
                                            l3 - Lightmap.DIAGONAL_UNIT,
@@ -370,7 +378,7 @@ public class World : MonoBehaviour
                 {
                     float adjacent = Lightmap.BLOCK_REDUCTION * Lightmap.LIGHT_UNIT;
                     float diagonal = Lightmap.BLOCK_REDUCTION * Lightmap.DIAGONAL_UNIT;
-                    lightValue = Mathf.Max(0,
+                    lightValue = Mathf.Max(0f,
                                            l1 - diagonal,
                                            l2 - adjacent,
                                            l3 - diagonal,

@@ -28,7 +28,6 @@ GameObject:
   m_Component:
   - 4: {fileID: 455204}
   - 212: {fileID: 21240870}
-  - 114: {fileID: 11420506}
   - 114: {fileID: 11423702}
   m_Layer: 0
   m_Name: FireElemental
@@ -56,7 +55,7 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 181788}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 750, y: 275.5, z: 0}
+  m_LocalPosition: {x: 200, y: 275.5, z: 0}
   m_LocalScale: {x: 2, y: 2, z: 1}
   m_Children:
   - {fileID: 431720}
@@ -90,10 +89,12 @@ Camera:
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0
+  m_TargetEye: 3
   m_HDR: 0
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
   m_StereoSeparation: .0219999999
+  m_StereoMirrorMode: 0
 --- !u!81 &8183550
 AudioListener:
   m_ObjectHideFlags: 1
@@ -108,7 +109,7 @@ Behaviour:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 123242}
   m_Enabled: 1
---- !u!114 &11420506
+--- !u!114 &11423702
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
@@ -116,7 +117,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 181788}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8a4b80789d5021d44bf57d29c3a1fbea, type: 3}
+  m_Script: {fileID: 11500000, guid: c1d4dbb02f5dd554c97af4f23baae5a6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   hitbox:
@@ -132,26 +133,19 @@ MonoBehaviour:
     rawValue: 589824
   runSpeed:
     rawValue: 983040
-  verticalAirSpeed:
+  upAirSpeed:
     rawValue: 0
+  downAirSpeed:
+    rawValue: 983040
   horizontalAirSpeed:
     rawValue: 983040
   fallSpeed:
     rawValue: 9830400
   fallAccel:
     rawValue: 3276800
-  jumpSpeed:
-    rawValue: 1310720
-  jumpDuration:
-    rawValue: 13107
-  jumpEndSpeed:
-    rawValue: 655360
-  currentJumpDuration:
-    rawValue: 0
-  allowInput: 1
-  carried: 0
-  grounded: 0
-  jumping: 0
+  turnaroundDuration: 4
+  turning: 0
+  state: 1
   facingRight: 1
   position:
     x:
@@ -163,24 +157,18 @@ MonoBehaviour:
       rawValue: 0
     y:
       rawValue: 0
-  pManager: {fileID: 0}
   feetPos:
-    rawValue: 98304
---- !u!114 &11423702
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 181788}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c1d4dbb02f5dd554c97af4f23baae5a6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+    rawValue: 95750
+  lastChunkPos:
+    x: 0
+    y: 0
+  lastBlockPos:
+    x: 0
+    y: 0
+  pManager: {fileID: 0}
   health: 100
   blockingMove: 0
   facingLeft: 0
-  phys: {fileID: 0}
   manager: {fileID: 0}
 --- !u!124 &12476734
 Behaviour:
@@ -221,7 +209,67 @@ Prefab:
   serializedVersion: 2
   m_Modification:
     m_TransformParent: {fileID: 0}
-    m_Modifications: []
+    m_Modifications:
+    - target: {fileID: 0}
+      propertyPath: hitbox.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: feetPos.rawValue
+      value: 95750
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: hitbox.Array.data[0].x.rawValue
+      value: -58982
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: hitbox.Array.data[0].y.rawValue
+      value: -95750
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: hitbox.Array.data[0].w.rawValue
+      value: 117964
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: hitbox.Array.data[0].h.rawValue
+      value: 193500
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: mass.rawValue
+      value: 589824
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: runSpeed.rawValue
+      value: 983040
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: downAirSpeed.rawValue
+      value: 983040
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: horizontalAirSpeed.rawValue
+      value: 983040
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: fallSpeed.rawValue
+      value: 9830400
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: fallAccel.rawValue
+      value: 3276800
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: turnaroundDuration
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: position.x.rawValue
+      value: 13107200
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: position.y.rawValue
+      value: 16384000
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 181788}

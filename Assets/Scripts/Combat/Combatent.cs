@@ -5,13 +5,15 @@ using System.Collections.Generic;
 public class Combatent : PhysicsMover
 {
     // Combat Variables
-    public int health = 0;
-    public bool blockingMove = false;
-    public bool facingLeft = false;
+    public int health;
+    public int maxJumps;
+    public FInt jumpSpeed;
+    [HideInInspector] public int jumps = 0;
+    [HideInInspector] public bool blockingMove = false;
 
     // Combat Management
-    public CombatManager manager = null;
-    public List<Move> moves = null;
+    [HideInInspector] public CombatManager manager = null;
+    [HideInInspector] public List<Move> moves = null;
 
     public virtual void TriggerMoves()
     {

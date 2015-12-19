@@ -8,7 +8,7 @@ public class FireForwardGround : Move {
     public FireForwardGround(Combatent combatent)
     {
         owner = combatent;
-        duration = 10;
+        duration = 15;
         hitbox1 = new Hitbox();
         hitbox1.sourcePlayer = owner;
         hitbox1.sourceMove = this;
@@ -69,11 +69,10 @@ public class FireForwardGround : Move {
             case 13:
                 break;
             case 14:
-                mgr.moves.Remove(this);
                 owner.blockingMove = false;
                 break;
         }
-        currentFrame += 1;
+        base.Step(mgr);
     }
 
     public override void Trigger(CombatManager mgr)

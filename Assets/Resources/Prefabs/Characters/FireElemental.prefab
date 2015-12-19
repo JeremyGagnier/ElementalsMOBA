@@ -145,7 +145,6 @@ MonoBehaviour:
     rawValue: 3276800
   turnaroundDuration: 4
   turning: 0
-  state: 1
   facingRight: 1
   position:
     x:
@@ -167,8 +166,11 @@ MonoBehaviour:
     y: 0
   pManager: {fileID: 0}
   health: 100
+  maxJumps: 1
+  jumpSpeed:
+    rawValue: 2072430
+  jumps: 0
   blockingMove: 0
-  facingLeft: 0
   manager: {fileID: 0}
 --- !u!124 &12476734
 Behaviour:
@@ -269,6 +271,18 @@ Prefab:
     - target: {fileID: 0}
       propertyPath: position.y.rawValue
       value: 16384000
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: maxJumps
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: jumpHeight
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: jumpSpeed.rawValue
+      value: 2072430
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}

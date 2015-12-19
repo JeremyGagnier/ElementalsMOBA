@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -59,20 +60,73 @@ public class PhysicsMover : MonoBehaviour {
      * Other movement
      */
     public int turnaroundDuration;
-    public int turning = 0;
+    [HideInInspector] public int turning = 0;
 
     /*
      * Important state variables
      */
-    public State state = State.AIRBORNE;
-    public bool facingRight = true;
+    public Action onGrounded;
+    public Action onAirborne;
+    public Action onLaunched;
+    public Action onStunned;
+    public Action onLagged;
+    private State _state = State.AIRBORNE;
+    public State state 
+    {
+        get
+        {
+            return _state;
+        }
+        set
+        {
+            if (state != value)
+            {
+                _state = value;
+                switch (value)
+                {
+                    case State.GROUNDED:
+                        if (onGrounded != null)
+                        {
+                            onGrounded();
+                        }
+                        break;
+                    case State.AIRBORNE:
+                        if (onAirborne != null)
+                        {
+                            onAirborne();
+                        }
+                        break;
+                    case State.LAUNCHED:
+                        if (onLaunched != null)
+                        {
+                            onLaunched();
+                        }
+                        break;
+                    case State.STUNNED:
+                        if (onStunned != null)
+                        {
+                            onStunned();
+                        }
+                        break;
+                    case State.LAGGED:
+                        if (onLagged != null)
+                        {
+                            onLagged();
+                        }
+                        break;
+                }
+            }
+        }
+    }
+
+    [HideInInspector] public bool facingRight = true;
 
     public FVector position = new FVector(FInt.Zero(), FInt.Zero());
-    public FVector velocity = new FVector(FInt.Zero(), FInt.Zero());
+    [HideInInspector] public FVector velocity = new FVector(FInt.Zero(), FInt.Zero());
 
     public FInt feetPos;
-    public Tuple lastChunkPos;
-    public Tuple lastBlockPos;
+    [HideInInspector] public Tuple lastChunkPos;
+    [HideInInspector] public Tuple lastBlockPos;
 
     public Tuple chunkPos
     {
@@ -91,7 +145,7 @@ public class PhysicsMover : MonoBehaviour {
         }
     }
 
-    public PhysicsManager pManager;
+    [HideInInspector] public PhysicsManager pManager;
 
     void OnDrawGizmos()
     {
@@ -147,6 +201,9 @@ public class PhysicsMover : MonoBehaviour {
                 }
                 else
                 {
+                    facingRight = true;
+                    // This is pretty hacky
+                    this.transform.localScale = new Vector3(2f, 2f, 1f);
                     turning = turnaroundDuration;
                     vel.x = FInt.Zero();
                 }
@@ -155,6 +212,9 @@ public class PhysicsMover : MonoBehaviour {
             {
                 if (facingRight)
                 {
+                    facingRight = false;
+                    // This is pretty hacky
+                    this.transform.localScale = new Vector3(-2f, 2f, 1f);
                     turning = turnaroundDuration;
                     vel.x = FInt.Zero();
                 }
@@ -171,38 +231,7 @@ public class PhysicsMover : MonoBehaviour {
         else
         {
             vel.x = FInt.Zero();
-            if (InputManager.forwardPressed)
-            {
-                if (facingRight)
-                {
-                    turning = 0;
-                }
-                else
-                {
-                    turning -= 1;
-                }
-            }
-            else if (InputManager.backwardPressed)
-            {
-                if (facingRight)
-                {
-                    turning -= 1;
-                }
-                else
-                {
-                    turning = 0;
-                }
-            }
-            else
-            {
-                turning -= 1;
-            }
-
-            if (turning == 0)
-            {
-                facingRight = InputManager.forwardPressed;
-                this.transform.localScale = new Vector3(2f * (facingRight ? 1f : -1f), 2f, 1f);
-            }
+            turning -= 1;
         }
         return vel;
     }

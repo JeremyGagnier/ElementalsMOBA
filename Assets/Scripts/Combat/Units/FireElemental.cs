@@ -47,10 +47,12 @@ public class FireElemental : Combatent
 
     void Awake()
     {
+        onGrounded += () => { jumps = maxJumps; };
         moves = new List<Move>();
 
-        // Add all the  moves to the moves list for easier management.
-        //moves.Add(jump);
+        // Add all the moves to the moves list for easier management.
+        jump = new Jump(this);
+        moves.Add(jump);
         fground = new FireForwardGround(this);
         moves.Add(fground);
         //moves.Add(bground);

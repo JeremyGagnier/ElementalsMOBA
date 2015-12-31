@@ -2,61 +2,65 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class Jump : Move {
+public class Jump : Move
+{
     private enum Type
     {
         GROUNDED,
-        DOUBLE
+        AERIAL
     }
+
+    private Type jumpType;
+    private bool stillHolding = false;
 
     public Jump(Combatent combatent)
     {
         owner = combatent;
-        duration = 10;
+        duration = 16;
     }
 
     public override void Step(CombatManager mgr)
     {
-        switch (currentFrame)
+        if (jumpType == Type.GROUNDED)
         {
-            case 0:
-                owner.velocity.y = owner.jumpSpeed;
-                break;
-            case 1:
-                break;
-            case 2:
-                break;
-            case 3:
-                break;
-            case 4:
-                break;
-            case 5:
-                break;
-            case 6:
-                break;
-            case 7:
-                break;
-            case 8:
-                break;
-            case 9:
-                break;
-            case 10:
-                break;
-            case 11:
-                break;
-            case 12:
-                break;
-            case 13:
-                break;
-            case 14:
-                break;
+            if (currentFrame == 4)
+            {
+                owner.state = PhysicsMover.State.AIRBORNE;
+                owner.velocity.y = owner.groundedJumpSpeed;
+            }
+            else if (currentFrame >= 5 && currentFrame < 6)
+            {
+                owner.velocity.y = owner.groundedJumpSpeed;
+            }
+            else if (currentFrame == 6)
+            {
+                if (owner.input.jumpPressed)
+                {
+                    stillHolding = true;
+                    owner.velocity.y = owner.groundedJumpSpeed;
+                }
+            }
+            else if (currentFrame >= 7 && currentFrame < 16)
+            {
+                if (stillHolding)
+                {
+                    owner.velocity.y = owner.groundedJumpSpeed;
+                }
+            }
+        }
+        else if (jumpType == Type.AERIAL)
+        {
+            if (currentFrame == 2)
+            {
+                owner.velocity.y = owner.aerialJumpSpeed;
+            }
         }
         base.Step(mgr);
     }
 
     public override void Trigger(CombatManager mgr)
     {
-        if (!InputManager.jumpJustPressed ||
+        if (!owner.input.jumpJustPressed ||
             owner.blockingMove)
         {
             return;
@@ -64,7 +68,7 @@ public class Jump : Move {
 
         if (owner.state == PhysicsMover.State.GROUNDED)
         {
-            owner.state = PhysicsMover.State.AIRBORNE;
+            jumpType = Type.GROUNDED;
         }
         else if (owner.state == PhysicsMover.State.AIRBORNE)
         {
@@ -75,13 +79,14 @@ public class Jump : Move {
             else
             {
                 owner.jumps -= 1;
+                jumpType = Type.AERIAL;
             }
         }
         else
         {
             return;
         }
-
+        stillHolding = false;
         base.Trigger(mgr);
         //Debug.Log("Jump");
     }

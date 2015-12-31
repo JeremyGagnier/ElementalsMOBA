@@ -50,11 +50,12 @@ public class PhysicsMover : MonoBehaviour {
     /*
      * Air movement variables
      */
-    public FInt upAirSpeed;
-    public FInt downAirSpeed;
+    public FInt upAirAccel;
+    public FInt downAirAccel;
+    public FInt horizontalAirAccel;
     public FInt horizontalAirSpeed;
-    public FInt fallSpeed;
     public FInt fallAccel;
+    public FInt fallSpeed;
 
     /*
      * Other movement
@@ -145,7 +146,8 @@ public class PhysicsMover : MonoBehaviour {
         }
     }
 
-    [HideInInspector] public PhysicsManager pManager;
+    [HideInInspector] public PhysicsManager pManager = null;
+    [HideInInspector] public InputManager input = null;
 
     void OnDrawGizmos()
     {
@@ -193,7 +195,7 @@ public class PhysicsMover : MonoBehaviour {
     {
         if (turning == 0)
         {
-            if (InputManager.forwardPressed)
+            if (input.forwardPressed)
             {
                 if (facingRight)
                 {
@@ -208,7 +210,7 @@ public class PhysicsMover : MonoBehaviour {
                     vel.x = FInt.Zero();
                 }
             }
-            else if (InputManager.backwardPressed)
+            else if (input.backwardPressed)
             {
                 if (facingRight)
                 {
@@ -248,27 +250,71 @@ public class PhysicsMover : MonoBehaviour {
                 break;
 
             case State.AIRBORNE:
-                if (InputManager.forwardPressed)
+                if (turning != 0)
                 {
-                    vel.x = horizontalAirSpeed;
+                    turning = 0;
+                    facingRight = !facingRight;
+                    this.transform.localScale = new Vector3(facingRight ? 2f : -2f, 2f, 1f);
                 }
-                else if (InputManager.backwardPressed)
+
+                if (vel.x < -horizontalAirSpeed)
                 {
-                    vel.x = -horizontalAirSpeed;
+                    if (input.forwardPressed)
+                    {
+                        vel.x += horizontalAirAccel * PhysicsManager.timestep * new FInt(2);
+                    }
+                    else if (input.backwardPressed)
+                    {
+                        vel.x += horizontalAirAccel * PhysicsManager.timestep * new FInt(0.33);
+                    }
+                    else
+                    {
+                        vel.x += horizontalAirAccel * PhysicsManager.timestep;
+                    }
+                }
+                else if (vel.x <= horizontalAirSpeed)
+                {
+                    if (input.forwardPressed)
+                    {
+                        vel.x += horizontalAirAccel * PhysicsManager.timestep;
+                        if (vel.x > horizontalAirSpeed)
+                        {
+                            vel.x = horizontalAirSpeed;
+                        }
+                    }
+                    else if (input.backwardPressed)
+                    {
+                        vel.x -= horizontalAirAccel * PhysicsManager.timestep;
+                        if (vel.x < -horizontalAirSpeed)
+                        {
+                            vel.x = -horizontalAirSpeed;
+                        }
+                    }
                 }
                 else
                 {
-                    vel.x = FInt.Zero();
+                    if (input.backwardPressed)
+                    {
+                        vel.x -= horizontalAirAccel * PhysicsManager.timestep * new FInt(2);
+                    }
+                    else if (input.forwardPressed)
+                    {
+                        vel.x -= horizontalAirAccel * PhysicsManager.timestep * new FInt(0.33);
+                    }
+                    else
+                    {
+                        vel.x -= horizontalAirAccel * PhysicsManager.timestep;
+                    }
                 }
-
-                if (InputManager.upPressed)
+                /*
+                if (input.upPressed)
                 {
-                    vel.y += upAirSpeed * PhysicsManager.timestep;
+                    vel.y += upAirAccel * PhysicsManager.timestep;
                 }
-                else if (InputManager.downPressed)
+                else if (input.downPressed)
                 {
-                    vel.y -= downAirSpeed * PhysicsManager.timestep;
-                }
+                    vel.y -= downAirAccel * PhysicsManager.timestep;
+                }*/
                 vel.y -= fallAccel * PhysicsManager.timestep;
                 if (vel.y < -fallSpeed)
                 {
@@ -277,23 +323,6 @@ public class PhysicsMover : MonoBehaviour {
                 break;
 
             case State.LAUNCHED:
-                if (InputManager.forwardPressed)
-                {
-                    vel.x += horizontalAirSpeed * PhysicsManager.timestep * new FInt(0.5);
-                }
-                else if (InputManager.backwardPressed)
-                {
-                    vel.x -= horizontalAirSpeed * PhysicsManager.timestep * new FInt(0.5);
-                }
-
-                if (InputManager.upPressed)
-                {
-                    vel.y += horizontalAirSpeed * PhysicsManager.timestep * new FInt(0.5);
-                }
-                else if (InputManager.downPressed)
-                {
-                    vel.y -= horizontalAirSpeed * PhysicsManager.timestep * new FInt(0.5);
-                }
                 break;
         }
 
@@ -326,8 +355,8 @@ public class PhysicsMover : MonoBehaviour {
         {
             // Check if we should move the player up one block (climbing)
             bool climb = false;
-            if ((InputManager.forwardPressed && velocity.x > FInt.Zero()) ||
-                (InputManager.backwardPressed && velocity.x < FInt.Zero()))
+            if ((input.forwardPressed && velocity.x > FInt.Zero()) ||
+                (input.backwardPressed && velocity.x < FInt.Zero()))
             {
                 if (blocks.Count != 0)
                 {

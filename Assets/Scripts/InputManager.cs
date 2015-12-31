@@ -2,49 +2,51 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class InputManager : MonoBehaviour
+public class InputManager
 {
-    private static List<int> jump = new List<int>();
-    private static int jumpCtr = 0;
+    public bool isLocalPlayer = false;
 
-    private static List<int> dodge = new List<int>();
-    private static int dodgeCtr = 0;
+    private List<int> jump = new List<int>();
+    private int jumpCtr = 0;
 
-    private static List<int> forward = new List<int>();
-    private static int forwardCtr = 0;
+    private List<int> dodge = new List<int>();
+    private int dodgeCtr = 0;
 
-    private static List<int> backward = new List<int>();
-    private static int backwardCtr = 0;
+    private List<int> forward = new List<int>();
+    private int forwardCtr = 0;
 
-    private static List<int> down = new List<int>();
-    private static int downCtr = 0;
+    private List<int> backward = new List<int>();
+    private int backwardCtr = 0;
 
-    private static List<int> up = new List<int>();
-    private static int upCtr = 0;
+    private List<int> down = new List<int>();
+    private int downCtr = 0;
 
-    private static List<int> forwardAttack = new List<int>();
-    private static int forwardAttackCtr = 0;
+    private List<int> up = new List<int>();
+    private int upCtr = 0;
 
-    private static List<int> backAttack = new List<int>();
-    private static int backAttackCtr = 0;
+    private List<int> forwardAttack = new List<int>();
+    private int forwardAttackCtr = 0;
 
-    private static List<int> downAttack = new List<int>();
-    private static int downAttackCtr = 0;
+    private List<int> backAttack = new List<int>();
+    private int backAttackCtr = 0;
 
-    private static List<int> upAttack = new List<int>();
-    private static int upAttackCtr = 0;
+    private List<int> downAttack = new List<int>();
+    private int downAttackCtr = 0;
 
-    private static List<int> b1 = new List<int>();
-    private static int b1Ctr = 0;
+    private List<int> upAttack = new List<int>();
+    private int upAttackCtr = 0;
 
-    private static List<int> b2 = new List<int>();
-    private static int b2Ctr = 0;
+    private List<int> b1 = new List<int>();
+    private int b1Ctr = 0;
 
-    private static List<int> b3 = new List<int>();
-    private static int b3Ctr = 0;
+    private List<int> b2 = new List<int>();
+    private int b2Ctr = 0;
 
-    private static List<int> b4 = new List<int>();
-    private static int b4Ctr = 0;
+    private List<int> b3 = new List<int>();
+    private int b3Ctr = 0;
+
+    private List<int> b4 = new List<int>();
+    private int b4Ctr = 0;
 
     // The following are the variables that can be accessed
     // by other classes.
@@ -52,102 +54,119 @@ public class InputManager : MonoBehaviour
     // if that input has changed an odd number of times.
     // The JustPressed boolean values are only on for the
     // frame in which they changed.
-    public static bool jumpJustPressed;
-    public static bool jumpPressed
+    public bool jumpJustPressed;
+    public bool jumpPressed
     {
         get { return (jump.Count % 2 == 1); }
     }
 
-    public static bool dodgeJustPressed;
-    public static bool dodgePressed
+    public bool dodgeJustPressed;
+    public bool dodgePressed
     {
         get { return (dodge.Count % 2 == 1); }
     }
 
-    public static bool forwardJustPressed;
-    public static bool forwardPressed
+    public bool forwardJustPressed;
+    public bool forwardPressed
     {
         get { return (forward.Count % 2 == 1); }
     }
 
-    public static bool backwardJustPressed;
-    public static bool backwardPressed
+    public bool backwardJustPressed;
+    public bool backwardPressed
     {
         get { return (backward.Count % 2 == 1); }
     }
 
-    public static bool downJustPressed;
-    public static bool downPressed
+    public bool downJustPressed;
+    public bool downPressed
     {
         get { return (down.Count % 2 == 1); }
     }
 
-    public static bool upJustPressed;
-    public static bool upPressed
+    public bool upJustPressed;
+    public bool upPressed
     {
         get { return (up.Count % 2 == 1); }
     }
 
-    public static bool forwardAttackJustPressed;
-    public static bool forwardAttackPressed
+    public bool forwardAttackJustPressed;
+    public bool forwardAttackPressed
     {
         get { return (forwardAttack.Count % 2 == 1); }
     }
 
-    public static bool backAttackJustPressed;
-    public static bool backAttackPressed
+    public bool backAttackJustPressed;
+    public bool backAttackPressed
     {
         get { return (backAttack.Count % 2 == 1); }
     }
 
-    public static bool downAttackJustPressed;
-    public static bool downAttackPressed
+    public bool downAttackJustPressed;
+    public bool downAttackPressed
     {
         get { return (downAttack.Count % 2 == 1); }
     }
 
-    public static bool upAttackJustPressed;
-    public static bool upAttackPressed
+    public bool upAttackJustPressed;
+    public bool upAttackPressed
     {
         get { return (upAttack.Count % 2 == 1); }
     }
 
-    public static bool b1JustPressed;
-    public static bool b1Pressed
+    public bool b1JustPressed;
+    public bool b1Pressed
     {
         get { return (b1.Count % 2 == 1); }
     }
 
-    public static bool b2JustPressed;
-    public static bool b2Pressed
+    public bool b2JustPressed;
+    public bool b2Pressed
     {
         get { return (b2.Count % 2 == 1); }
     }
 
-    public static bool b3JustPressed;
-    public static bool b3Pressed
+    public bool b3JustPressed;
+    public bool b3Pressed
     {
         get { return (b3.Count % 2 == 1); }
     }
 
-    public static bool b4JustPressed;
-    public static bool b4Pressed
+    public bool b4JustPressed;
+    public bool b4Pressed
     {
         get { return (b4.Count % 2 == 1); }
     }
 
-    public static void Advance(int frames)
+    public void Advance(int frames)
     {
-        float jumpInput = Input.GetAxis("Jump");
-        float dodgeInput = Input.GetAxis("Dodge");
-        float horizontal = Input.GetAxis("Horizontal");
-        float vertical = Input.GetAxis("Vertical");
-        float horizontalAttack = Input.GetAxis("HorizontalAttack");
-        float verticalAttack = Input.GetAxis("VerticalAttack");
-        float b1Input = Input.GetAxis("1");
-        float b2Input = Input.GetAxis("2");
-        float b3Input = Input.GetAxis("3");
-        float b4Input = Input.GetAxis("4");
+        float jumpInput = 0f;
+        float dodgeInput = 0f;
+        float horizontal = 0f;
+        float vertical = 0f;
+        float horizontalAttack = 0f;
+        float verticalAttack = 0f;
+        float b1Input = 0f;
+        float b2Input = 0f;
+        float b3Input = 0f;
+        float b4Input = 0f;
+        if (isLocalPlayer)
+        {
+            jumpInput = Input.GetAxis("Jump");
+            dodgeInput = Input.GetAxis("Dodge");
+            horizontal = Input.GetAxis("Horizontal");
+            vertical = Input.GetAxis("Vertical");
+            horizontalAttack = Input.GetAxis("HorizontalAttack");
+            verticalAttack = Input.GetAxis("VerticalAttack");
+            b1Input = Input.GetAxis("1");
+            b2Input = Input.GetAxis("2");
+            b3Input = Input.GetAxis("3");
+            b4Input = Input.GetAxis("4");
+        }
+        else
+        {
+            // Pull input info from another source...
+        }
 
         for (int i = 0; i < frames; ++i)
         {

@@ -89,12 +89,10 @@ Camera:
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0
-  m_TargetEye: 3
   m_HDR: 0
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
   m_StereoSeparation: .0219999999
-  m_StereoMirrorMode: 0
 --- !u!81 &8183550
 AudioListener:
   m_ObjectHideFlags: 1
@@ -133,16 +131,18 @@ MonoBehaviour:
     rawValue: 589824
   runSpeed:
     rawValue: 983040
-  upAirSpeed:
+  upAirAccel:
     rawValue: 0
-  downAirSpeed:
-    rawValue: 983040
+  downAirAccel:
+    rawValue: 9830400
+  horizontalAirAccel:
+    rawValue: 2555904
   horizontalAirSpeed:
-    rawValue: 983040
+    rawValue: 1277952
+  fallAccel:
+    rawValue: 9830400
   fallSpeed:
     rawValue: 9830400
-  fallAccel:
-    rawValue: 3276800
   turnaroundDuration: 4
   turning: 0
   facingRight: 1
@@ -167,8 +167,10 @@ MonoBehaviour:
   pManager: {fileID: 0}
   health: 100
   maxJumps: 1
-  jumpSpeed:
-    rawValue: 2072430
+  groundedJumpSpeed:
+    rawValue: 2243030
+  aerialJumpSpeed:
+    rawValue: 3443030
   jumps: 0
   blockingMove: 0
   manager: {fileID: 0}

@@ -77,8 +77,8 @@ public class FireForwardGround : Move {
 
     public override void Trigger(CombatManager mgr)
     {
-        if (!((InputManager.forwardAttackJustPressed && owner.facingRight) ||
-              (InputManager.backAttackJustPressed && !owner.facingRight)) ||
+        if (!((owner.input.forwardAttackJustPressed && owner.facingRight) ||
+              (owner.input.backAttackJustPressed && !owner.facingRight)) ||
             owner.blockingMove ||
             owner.state != PhysicsMover.State.GROUNDED)
         {

@@ -7,7 +7,8 @@ public class Combatent : PhysicsMover
     // Combat Variables
     public int health;
     public int maxJumps;
-    public FInt jumpSpeed;
+    public FInt groundedJumpSpeed;
+    public FInt aerialJumpSpeed;
     [HideInInspector] public int jumps = 0;
     [HideInInspector] public bool blockingMove = false;
 

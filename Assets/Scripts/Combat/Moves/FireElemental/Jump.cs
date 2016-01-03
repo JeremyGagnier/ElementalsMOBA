@@ -53,6 +53,22 @@ public class Jump : Move
             if (currentFrame == 2)
             {
                 owner.velocity.y = owner.aerialJumpSpeed;
+                if (owner.input.leftPressed)
+                {
+                    owner.velocity.x -= owner.horizontalAirAccel * new FInt(0.25f);
+                    if (owner.velocity.x < -owner.horizontalAirSpeed)
+                    {
+                        owner.velocity.x = -owner.horizontalAirSpeed;
+                    }
+                }
+                else if (owner.input.rightPressed)
+                {
+                    owner.velocity.x += owner.horizontalAirAccel * new FInt(0.25f);
+                    if (owner.velocity.x > owner.horizontalAirSpeed)
+                    {
+                        owner.velocity.x = owner.horizontalAirSpeed;
+                    }
+                }
             }
         }
         base.Step(mgr);

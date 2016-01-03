@@ -16,7 +16,7 @@ using System.Collections.Generic;
  *  Most of these are properties of a hitbox
  */
 
-public struct Sphere
+public struct Circle
 {
     public int cx;
     public int cy;
@@ -27,19 +27,20 @@ public struct Sphere
 
 public class Hurtbox
 {
-    public Sphere pos;
+    public Circle pos;
     public int armor = 0;
     public Combatent player = null;
 };
 
 public class Hitbox
 {
-    public Sphere pos;
+    public Circle pos;
     public int damage = 0;
     public int knockback = 0;
     public int hitstun = 0;
     public Combatent sourcePlayer = null;
-    public List<Combatent> damagedPlayers = null;
+    public List<Combatent> damagedPlayers = new List<Combatent>();
+    public HashSet<Tuple> damagedBlocks = new HashSet<Tuple>();
     public Move sourceMove = null;
 };
 
@@ -52,11 +53,6 @@ public class Move
     public virtual void Step(CombatManager mgr)
     {
         currentFrame += 1;
-        if (currentFrame == duration)
-        {
-            mgr.moves.Remove(this);
-            currentFrame = 0;
-        }
     }
 
     public virtual void Trigger(CombatManager mgr)

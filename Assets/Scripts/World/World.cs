@@ -25,7 +25,7 @@ public class World : MonoBehaviour
     private Dictionary<Tuple, Blockmap> blockmaps = new Dictionary<Tuple, Blockmap>();
     private Dictionary<Tuple, Lightmap> lightmaps = new Dictionary<Tuple, Lightmap>();
     private Dictionary<Tuple, Backmap> backmaps = new Dictionary<Tuple, Backmap>();
-    private Dictionary<Tuple, Dictionary<Tuple, int>> damage;
+    private Dictionary<Tuple, Dictionary<Tuple, int>> damage = new Dictionary<Tuple, Dictionary<Tuple, int>>();
     private List<Tuple> generationOrder = new List<Tuple>();
 	private int playerCX = -1;
 	private int playerCY = -1;
@@ -260,11 +260,6 @@ public class World : MonoBehaviour
         return lightmaps[new Tuple(x / numBlocksWide, y / numBlocksHigh)].brightness[x % numBlocksWide, y % numBlocksHigh];
     }
 
-    public void SetBrightnessAt(float brightness, int cx, int cy, int bx, int by)
-    {
-        lightmaps[new Tuple(cx, cy)].Relight(brightness, bx, by);
-    }
-
     public void SetBrightnessAt(float brightness, int x, int y)
     {
         Tuple chunkAt = new Tuple(x / numBlocksWide, y / numBlocksHigh);
@@ -283,7 +278,6 @@ public class World : MonoBehaviour
             if (damage[c].ContainsKey(b))
             {
                 damage[c][b] -= dmg;
-                // TODO: Do something if block is destroyed
             }
             else
             {
@@ -295,6 +289,12 @@ public class World : MonoBehaviour
         {
             damage.Add(c, new Dictionary<Tuple, int>());
             damage[c].Add(b, 100 - dmg);
+        }
+
+        if (damage[c][b] <= 0)
+        {
+            blockmaps[new Tuple(c.x, c.y)].DestroyBlock(b.x, b.y);
+            RefreshBlock(c.x, c.y, b.x, b.y);
         }
     }
 

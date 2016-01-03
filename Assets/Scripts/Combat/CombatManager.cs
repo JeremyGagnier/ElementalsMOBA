@@ -4,8 +4,9 @@ using System.Collections.Generic;
 
 public class CombatManager : MonoBehaviour
 {
+    public World world = null;
+
     public List<Combatent> combatents = new List<Combatent>();
-    // All moves in the moves list are currently being executed.
     public List<Move> moves = new List<Move>();
     public List<Hurtbox> hurtboxes = new List<Hurtbox>();
     public List<Hitbox> hitboxes = new List<Hitbox>();
@@ -38,19 +39,56 @@ public class CombatManager : MonoBehaviour
     {
         for (int f = Game.frame; f < Game.frame + frames; ++f)
         {
-            for (int i = 0; i < combatents.Count; ++i)
+            foreach (Combatent combatent in combatents)
             {
-                combatents[i].TriggerMoves();
+                combatent.TriggerMoves();
             }
 
             // Update all moves
             for (int i = 0; i < moves.Count; ++i)
             {
                 moves[i].Step(this);
+                // This must be done here to prevent skipping the next active move.
+                if (moves[i].currentFrame == moves[i].duration)
+                {
+                    moves.RemoveAt(i);
+                    i -= 1;
+                }
             }
 
             // Calculate all hits
+            foreach (Hitbox hitbox in hitboxes)
+            {
+                // Check collision with blocks
 
+                FInt real_x = hitbox.pos.x + hitbox.sourcePlayer.position.x;
+                FInt real_y = hitbox.pos.y + hitbox.sourcePlayer.position.y;
+
+                int xMin = (real_x - hitbox.pos.r).ToInt();
+                int xMax = (real_x + hitbox.pos.r).ToInt() + 1;
+                int yMin = (real_y - hitbox.pos.r).ToInt();
+                int yMax = (real_y + hitbox.pos.r).ToInt() + 1;
+                for (int x = xMin; x <= xMax; ++x)
+                {
+                    for (int y = yMin; y <= yMax; ++y)
+                    {
+                        // Do a check to make sure that this block is actually colliding
+                        if (!Collisions.CircleToBox(real_x, real_y, hitbox.pos.r,
+                                                    new FInt(x), new FInt(y), FInt.One(), FInt.One()))
+                        {
+                            continue;
+                        }
+
+                        Tuple pos = new Tuple(x, y);
+                        if (world.BlockAt(x, y) != 0 &&
+                            !hitbox.damagedBlocks.Contains(pos))
+                        {
+                            world.DamageBlock(x, y, hitbox.damage);
+                            hitbox.damagedBlocks.Add(pos);
+                        }
+                    }
+                }
+            }
         }
     }
 

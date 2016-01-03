@@ -12,11 +12,11 @@ public class InputManager
     private List<int> dodge = new List<int>();
     private int dodgeCtr = 0;
 
-    private List<int> forward = new List<int>();
-    private int forwardCtr = 0;
+    private List<int> right = new List<int>();
+    private int rightCtr = 0;
 
-    private List<int> backward = new List<int>();
-    private int backwardCtr = 0;
+    private List<int> left = new List<int>();
+    private int leftCtr = 0;
 
     private List<int> down = new List<int>();
     private int downCtr = 0;
@@ -24,11 +24,11 @@ public class InputManager
     private List<int> up = new List<int>();
     private int upCtr = 0;
 
-    private List<int> forwardAttack = new List<int>();
-    private int forwardAttackCtr = 0;
+    private List<int> rightAttack = new List<int>();
+    private int rightAttackCtr = 0;
 
-    private List<int> backAttack = new List<int>();
-    private int backAttackCtr = 0;
+    private List<int> leftAttack = new List<int>();
+    private int leftAttackCtr = 0;
 
     private List<int> downAttack = new List<int>();
     private int downAttackCtr = 0;
@@ -66,16 +66,16 @@ public class InputManager
         get { return (dodge.Count % 2 == 1); }
     }
 
-    public bool forwardJustPressed;
-    public bool forwardPressed
+    public bool rightJustPressed;
+    public bool rightPressed
     {
-        get { return (forward.Count % 2 == 1); }
+        get { return (right.Count % 2 == 1); }
     }
 
-    public bool backwardJustPressed;
-    public bool backwardPressed
+    public bool leftJustPressed;
+    public bool leftPressed
     {
-        get { return (backward.Count % 2 == 1); }
+        get { return (left.Count % 2 == 1); }
     }
 
     public bool downJustPressed;
@@ -90,16 +90,16 @@ public class InputManager
         get { return (up.Count % 2 == 1); }
     }
 
-    public bool forwardAttackJustPressed;
-    public bool forwardAttackPressed
+    public bool rightAttackJustPressed;
+    public bool rightAttackPressed
     {
-        get { return (forwardAttack.Count % 2 == 1); }
+        get { return (rightAttack.Count % 2 == 1); }
     }
 
-    public bool backAttackJustPressed;
-    public bool backAttackPressed
+    public bool leftAttackJustPressed;
+    public bool leftAttackPressed
     {
-        get { return (backAttack.Count % 2 == 1); }
+        get { return (leftAttack.Count % 2 == 1); }
     }
 
     public bool downAttackJustPressed;
@@ -172,12 +172,12 @@ public class InputManager
         {
             jumpCtr += 1;
             dodgeCtr += 1;
-            forwardCtr += 1;
-            backwardCtr += 1;
+            rightCtr += 1;
+            leftCtr += 1;
             downCtr += 1;
             upCtr += 1;
-            forwardAttackCtr += 1;
-            backAttackCtr += 1;
+            rightAttackCtr += 1;
+            leftAttackCtr += 1;
             downAttackCtr += 1;
             upAttackCtr += 1;
             b1Ctr += 1;
@@ -209,27 +209,27 @@ public class InputManager
                 dodgeJustPressed = false;
             }
 
-            if ((forward.Count % 2 == 0 && horizontal == 1) ||
-                (forward.Count % 2 == 1 && horizontal != 1))
+            if ((right.Count % 2 == 0 && horizontal == 1) ||
+                (right.Count % 2 == 1 && horizontal != 1))
             {
-                forward.Add(forwardCtr);
-                forwardCtr = 0;
-                forwardJustPressed = (forward.Count % 2 == 1);
+                right.Add(rightCtr);
+                rightCtr = 0;
+                rightJustPressed = (right.Count % 2 == 1);
             }
             else
             {
-                forwardJustPressed = false;
+                rightJustPressed = false;
             }
-            if ((backward.Count % 2 == 0 && horizontal == -1) ||
-                (backward.Count % 2 == 1 && horizontal != -1))
+            if ((left.Count % 2 == 0 && horizontal == -1) ||
+                (left.Count % 2 == 1 && horizontal != -1))
             {
-                backward.Add(backwardCtr);
-                backwardCtr = 0;
-                backwardJustPressed = (backward.Count % 2 == 1);
+                left.Add(leftCtr);
+                leftCtr = 0;
+                leftJustPressed = (left.Count % 2 == 1);
             }
             else
             {
-                backwardJustPressed = false;
+                leftJustPressed = false;
             }
 
             if ((up.Count % 2 == 0 && vertical == 1) ||
@@ -255,27 +255,27 @@ public class InputManager
                 downJustPressed = false;
             }
 
-            if ((forwardAttack.Count % 2 == 0 && horizontalAttack == 1) ||
-                (forwardAttack.Count % 2 == 1 && horizontalAttack != 1))
+            if ((rightAttack.Count % 2 == 0 && horizontalAttack == 1) ||
+                (rightAttack.Count % 2 == 1 && horizontalAttack != 1))
             {
-                forwardAttack.Add(forwardAttackCtr);
-                forwardAttackCtr = 0;
-                forwardAttackJustPressed = (forwardAttack.Count % 2 == 1);
+                rightAttack.Add(rightAttackCtr);
+                rightAttackCtr = 0;
+                rightAttackJustPressed = (rightAttack.Count % 2 == 1);
             }
             else
             {
-                forwardAttackJustPressed = false;
+                rightAttackJustPressed = false;
             }
-            if ((backAttack.Count % 2 == 0 && horizontalAttack == -1) ||
-                (backAttack.Count % 2 == 1 && horizontalAttack != -1))
+            if ((leftAttack.Count % 2 == 0 && horizontalAttack == -1) ||
+                (leftAttack.Count % 2 == 1 && horizontalAttack != -1))
             {
-                backAttack.Add(backAttackCtr);
-                backAttackCtr = 0;
-                backAttackJustPressed = (backAttack.Count % 2 == 1);
+                leftAttack.Add(leftAttackCtr);
+                leftAttackCtr = 0;
+                leftAttackJustPressed = (leftAttack.Count % 2 == 1);
             }
             else
             {
-                backAttackJustPressed = false;
+                leftAttackJustPressed = false;
             }
 
             if ((upAttack.Count % 2 == 0 && verticalAttack == 1) ||

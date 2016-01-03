@@ -55,6 +55,7 @@ public class Game : MonoBehaviour
         world = worldObject.GetComponent<World>();
 
         physics.world = world;
+        combat.world = world;
 
         CreatePlayer(fireElemental, true);
     }

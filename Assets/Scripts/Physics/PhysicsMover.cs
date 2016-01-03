@@ -195,7 +195,7 @@ public class PhysicsMover : MonoBehaviour {
     {
         if (turning == 0)
         {
-            if (input.forwardPressed)
+            if (input.rightPressed)
             {
                 if (facingRight)
                 {
@@ -210,7 +210,7 @@ public class PhysicsMover : MonoBehaviour {
                     vel.x = FInt.Zero();
                 }
             }
-            else if (input.backwardPressed)
+            else if (input.leftPressed)
             {
                 if (facingRight)
                 {
@@ -259,11 +259,11 @@ public class PhysicsMover : MonoBehaviour {
 
                 if (vel.x < -horizontalAirSpeed)
                 {
-                    if (input.forwardPressed)
+                    if (input.rightPressed)
                     {
                         vel.x += horizontalAirAccel * PhysicsManager.timestep * new FInt(2);
                     }
-                    else if (input.backwardPressed)
+                    else if (input.leftPressed)
                     {
                         vel.x += horizontalAirAccel * PhysicsManager.timestep * new FInt(0.33);
                     }
@@ -274,7 +274,7 @@ public class PhysicsMover : MonoBehaviour {
                 }
                 else if (vel.x <= horizontalAirSpeed)
                 {
-                    if (input.forwardPressed)
+                    if (input.rightPressed)
                     {
                         vel.x += horizontalAirAccel * PhysicsManager.timestep;
                         if (vel.x > horizontalAirSpeed)
@@ -282,7 +282,7 @@ public class PhysicsMover : MonoBehaviour {
                             vel.x = horizontalAirSpeed;
                         }
                     }
-                    else if (input.backwardPressed)
+                    else if (input.leftPressed)
                     {
                         vel.x -= horizontalAirAccel * PhysicsManager.timestep;
                         if (vel.x < -horizontalAirSpeed)
@@ -293,11 +293,11 @@ public class PhysicsMover : MonoBehaviour {
                 }
                 else
                 {
-                    if (input.backwardPressed)
+                    if (input.leftPressed)
                     {
                         vel.x -= horizontalAirAccel * PhysicsManager.timestep * new FInt(2);
                     }
-                    else if (input.forwardPressed)
+                    else if (input.rightPressed)
                     {
                         vel.x -= horizontalAirAccel * PhysicsManager.timestep * new FInt(0.33);
                     }
@@ -355,8 +355,8 @@ public class PhysicsMover : MonoBehaviour {
         {
             // Check if we should move the player up one block (climbing)
             bool climb = false;
-            if ((input.forwardPressed && velocity.x > FInt.Zero()) ||
-                (input.backwardPressed && velocity.x < FInt.Zero()))
+            if ((input.rightPressed && velocity.x > FInt.Zero()) ||
+                (input.leftPressed && velocity.x < FInt.Zero()))
             {
                 if (blocks.Count != 0)
                 {

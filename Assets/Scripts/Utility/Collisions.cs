@@ -3,7 +3,7 @@ using System.Collections;
 
 public class Collisions
 {
-    private static FInt DistSqr(FInt x1, FInt y1, FInt x2, FInt y2)
+    public static FInt DistSqr(FInt x1, FInt y1, FInt x2, FInt y2)
     {
         return (x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2);
     }

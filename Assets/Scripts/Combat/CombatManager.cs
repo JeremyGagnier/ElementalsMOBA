@@ -56,11 +56,27 @@ public class CombatManager : MonoBehaviour
                 }
             }
 
-            // Calculate all hits
+            // Check collision with blocks
             foreach (Hitbox hitbox in hitboxes)
             {
-                // Check collision with blocks
+                FInt hit_x = hitbox.pos.x + hitbox.sourcePlayer.position.x;
+                FInt hit_y = hitbox.pos.y + hitbox.sourcePlayer.position.y;
 
+                foreach (Hurtbox hurtbox in hurtboxes)
+                {
+                    FInt hurt_x = hurtbox.pos.x + hurtbox.player.position.x;
+                    FInt hurt_y = hurtbox.pos.y + hurtbox.player.position.y;
+                    if (Collisions.DistSqr(hit_x, hit_y, hurt_x, hurt_y) < (hitbox.pos.r + hurtbox.pos.r) * (hitbox.pos.r + hurtbox.pos.r))
+                    {
+                        CalculateHit(hitbox, hurtbox);
+                        // player was hit!
+                    }
+                }
+            }
+
+            // Check collisions with hurtboxes
+            foreach (Hitbox hitbox in hitboxes)
+            {
                 FInt real_x = hitbox.pos.x + hitbox.sourcePlayer.position.x;
                 FInt real_y = hitbox.pos.y + hitbox.sourcePlayer.position.y;
 
@@ -95,5 +111,22 @@ public class CombatManager : MonoBehaviour
     internal void AddCombatent(Combatent combatent)
     {
         combatents.Add(combatent);
+    }
+
+    private void CalculateHit(Hitbox hitbox, Hurtbox hurtbox)
+    {
+        if (hurtbox.armor == 1)
+        {
+            return;
+        }
+        int direction = (hitbox.pos.x < hurtbox.pos.x) ? 1 : -1;
+
+        hurtbox.player.health -= hitbox.damage;
+        if (hurtbox.player.health <= 0)
+        {
+            //world.HandleDeath(hurtbox.player);
+        }
+
+
     }
 }

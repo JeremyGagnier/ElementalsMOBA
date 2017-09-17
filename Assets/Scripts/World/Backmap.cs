@@ -70,7 +70,6 @@ public class Backmap : MonoBehaviour
 		mesh.vertices = newVertices.ToArray();
 		mesh.triangles = newTriangles.ToArray();
 		mesh.uv = newUV.ToArray();
-		mesh.Optimize ();
 		mesh.RecalculateNormals ();
 	}
 
